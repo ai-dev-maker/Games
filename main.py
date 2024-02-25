@@ -49,7 +49,7 @@ class Enemy(GameSprite):
     def update_x(self):
         if self.rect.x > 650:
             self.direction = 'left'
-        elif self.rect.x < 450:
+        elif self.rect.x < 500:
             self.direction = 'right'
 
         if self.direction == 'right':
@@ -65,7 +65,7 @@ class Enemy(GameSprite):
         elif self.rect.y < 450:
             self.direction = 'down'
 
-        if self.direction == 'up':
+        if self.direction == 'down':
             self.rect.y += self.speed
         else:
             self.rect.y -= self.speed
@@ -100,6 +100,19 @@ class Enemy(GameSprite):
                 self.rect.y -= self.speed - 3
 
 
+class Wall(sprite.Sprite):
+    def __init__(self, wall_width, wall_height, wall_x, wall_y, color):
+        super().__init__()
+        self.image = Surface((wall_width, wall_height))
+        self.image.fill(color)
+        self.rect = self.image.get_rect()
+        self.rect.x = wall_x
+        self.rect.y = wall_y
+
+    def reset(self):
+        window.blit(self.image, (self.rect.x, self.rect.y))
+
+
 mixer.init()
 # mixer.music.load("music/jungles.ogg")
 # mixer.music.play()
@@ -116,28 +129,61 @@ background = transform.scale(image.load('background.jpg'), (window_width, window
 
 
 game = True
-player = Player("sprites/hero.png", 50, 50, 50, 50, 5)
+player = Player("sprites/hero.png", 30, 30, 50, 50, 5)
 monster = Enemy("sprites/cyborg.png", 550, 300, 50, 50, 5)
-gold = GameSprite("sprites/treasure.png", 550, 400, 70, 70, 0)
+gold = GameSprite("sprites/treasure.png", 600, 400, 70, 70, 0)
+
+color_wall = (120, 255, 120)
+wall1 = Wall(8, 400, 120, 0, color_wall)
+wall2 = Wall(8, 400, 230, 200, color_wall)
+wall3 = Wall(280, 8, 230, 70, color_wall)
+wall4 = Wall(8, 280, 340, 70, color_wall)
+wall5 = Wall(8, 300, 450, 200, color_wall)
+
+walls = [monster, wall1, wall2, wall3, wall4, wall5]
+
+font.init()
+font2 = font.Font(None, 50)
+win = font2.render("You win", True, (0, 200, 0))
+lose = font2.render("You lose", True, (200, 0, 0))
+
 
 clock = time.Clock()
 
+run = True
 while game:
     for e in event.get():
         if e.type == QUIT:
             game = False
 
-    # Draw Objects
-    window.blit(background, (0, 0))
-    player.reset()
-    monster.reset()
-    gold.reset()
+    if run:
+        # Draw Objects
+        window.blit(background, (0, 0))
+        player.reset()
+        monster.reset()
+        gold.reset()
 
-    # Manage Sprite
-    player.update()
+        # Manage Sprite
+        player.update()
 
-    # Monster Update
-    monster.follow_player_update(player.rect)
+        # Monster Update
+        monster.update_x()
 
-    clock.tick(60)
-    display.update()
+        # Draw Walls
+        wall1.reset()
+        wall2.reset()
+        wall3.reset()
+        wall4.reset()
+        wall5.reset()
+
+        for wall in walls:
+            if sprite.collide_rect(player, wall):
+                window.blit(lose, (window_width-350, window_height-350))
+                run = False
+
+        if sprite.collide_rect(player, gold):
+            window.blit(win, (window_width-350, window_height-350))
+            run = False
+
+        clock.tick(60)
+        display.update()
