@@ -130,6 +130,36 @@ class Animation(sprite.Sprite):
             self.kill()
 
 
+class Boss(GameSprite):
+    def __init__(self, boss_image, boss_x, boss_y, size_x, size_y, live=100, fire_speed=10):
+        super().__init__(boss_image, boss_x, boss_y, size_x, size_y, 0)
+        self.live = live
+        self.fire_speed = fire_speed
+        self.boss_bullets = sprite.Group()
+        self.last_time = 0
+        self.boss_is_dead = False
+
+    def update(self):
+        if self.boss_is_dead:
+            return
+
+        if self.live < 0:
+            self.rect.x = -1000
+            self.boss_is_dead = True
+
+        print_text(window, "Boss: " + str(self.live), 20, 100, (0, 255, 0), None, 30)
+
+        now_time = timer()
+        if now_time - self.last_time > 1:
+            bossBullet = Bullet("images/bullet.png", randint(self.rect.x, self.rect.right), self.rect.top + 150, 25, 35, -self.fire_speed)
+            self.boss_bullets.add(bossBullet)
+            self.last_time = timer()
+
+        self.boss_bullets.update()
+        self.boss_bullets.draw(window)
+        self.reset()
+
+
 def print_text(window, message, x, y, font_color, font_type=None, font_size=35):
     font_type = font.Font(font_type, font_size)
     text = font_type.render(message, True, font_color)
@@ -176,9 +206,11 @@ def game_run():
     gun1 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
     gun2 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
 
+    boss = Boss('images/ufo.png', window_width / 2 - 150, 0, 150, 150, 100, 10)
+
     monsters = sprite.Group()
     monsters_png = ["images/ufo.png", "images/asteroid.png"]
-    for i in range(5):
+    for i in range(10):
         monster = Enemy(choice(monsters_png), randint(0, window_width), -100, 50, 50, randint(1, 2))
         monsters.add(monster)
 
@@ -223,6 +255,16 @@ def game_run():
             window.blit(lost_text, (20, 45))
             live_text = font3.render("Live: " + str(live), True, (150, 0, 0))
             window.blit(live_text, (20, 70))
+
+            if score > 1:
+                boss.update()
+                col = sprite.spritecollide(boss, Bullets, True)
+                for c in col:
+                    x, y = c.rect.x - 10, c.rect.y - 10
+                    hit = Animation('images/anim11', x, y, 19)
+                    anim_hit.add(hit)
+                    boss.live -= 1
+                    score += 1
 
             collide = sprite.groupcollide(Bullets, monsters, True, True)
             for c in collide:
