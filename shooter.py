@@ -10,6 +10,7 @@ window = display.set_mode((window_width, window_height))
 display.set_caption('Shooter')
 
 mixer.init()
+font.init()
 
 FPS = 60
 clock = time.Clock()
@@ -68,15 +69,9 @@ class Player(GameSprite):
         if keys[K_d] and self.rect.x < window_width - self.rect.width:
             self.rect.x += self.speed
 
-        # pos = mouse.get_pos()
-        # self.rect.x = pos[0]
-        # self.rect.y = pos[1]
-
     def fire(self):
-        bullet = Bullet("images/bullet.png", self.rect.centerx-6, self.rect.y, 10, 14, 10)
+        bullet = Bullet("images/bullet_for_ironman.png", self.rect.centerx-6, self.rect.y, 10, 200, 14)
         Bullets.add(bullet)
-        # f = mixer.Sound("music/fire.ogg")
-        # f.play()
 
 
 class Enemy(GameSprite):
@@ -132,12 +127,24 @@ class Animation(sprite.Sprite):
 
 class Boss(GameSprite):
     def __init__(self, boss_image, boss_x, boss_y, size_x, size_y, live=100, fire_speed=10):
-        super().__init__(boss_image, boss_x, boss_y, size_x, size_y, 0)
+        super().__init__(boss_image, boss_x, boss_y, size_x, size_y, 3)
         self.live = live
         self.fire_speed = fire_speed
         self.boss_bullets = sprite.Group()
         self.last_time = 0
         self.boss_is_dead = False
+        self.direction = 'right'
+
+    def update_x(self):
+        if self.rect.x > window_width - 150:
+            self.direction = 'left'
+        elif self.rect.x < 0:
+            self.direction = 'right'
+
+        if self.direction == 'right':
+            self.rect.x += self.speed
+        else:
+            self.rect.x -= self.speed
 
     def update(self):
         if self.boss_is_dead:
@@ -151,8 +158,8 @@ class Boss(GameSprite):
 
         now_time = timer()
         if now_time - self.last_time > 1:
-            bossBullet = Bullet("images/bullet.png", randint(self.rect.x, self.rect.right), self.rect.top + 150, 25, 35, -self.fire_speed)
-            self.boss_bullets.add(bossBullet)
+            BossBullet = Bullet("images/bullet.png", randint(self.rect.x, self.rect.right), self.rect.top + 150, 25, 35, -self.fire_speed)
+            self.boss_bullets.add(BossBullet)
             self.last_time = timer()
 
         self.boss_bullets.update()
@@ -196,27 +203,21 @@ def game_run():
     background = transform.scale(image.load('images/galaxy.jpg'), (window_width, window_height))
 
     font.init()
-    font2 = font.Font(None, 50)
-    font3 = font.SysFont('Georgia', 20)
-    win = font2.render("You win", True, (0, 200, 0))
-    lose = font2.render("You lose", True, (200, 0, 0))
+    font_ = font.SysFont('Georgia', 20)
     game = True
 
-    player = Player("images/rocket.png", window_width / 2 - 70, window_height - 100, 70, 90, 6)
-    gun1 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
-    gun2 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
-
+    player = Player("images/iron_man.png", window_width / 2 - 70, window_height - 100, 90, 100, 6)
+    # gun1 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
+    # gun2 = Gun("images/rocket.png", "images/bullet.png", player, 50, 70, 6)
     boss = Boss('images/ufo.png', window_width / 2 - 150, 0, 150, 150, 100, 10)
+    Bullets = sprite.Group()
+    anim_hit = sprite.Group()
 
     monsters = sprite.Group()
     monsters_png = ["images/ufo.png", "images/asteroid.png"]
     for i in range(10):
         monster = Enemy(choice(monsters_png), randint(0, window_width), -100, 50, 50, randint(1, 2))
         monsters.add(monster)
-
-    Bullets = sprite.Group()
-
-    anim_hit = sprite.Group()
 
     score = 0
     lost = 0
@@ -229,8 +230,6 @@ def game_run():
                 game = False
             if e.type == MOUSEBUTTONDOWN and e.button == 1:
                 player.fire()
-                # gun1.fire()
-                # gun2.fire()
 
         if run:
             window.blit(background, (0, 0))
@@ -238,8 +237,8 @@ def game_run():
             player.update()
             player.reset()
 
-            gun1.update(-30, -15)
-            gun2.update(50, -15)
+            # gun1.update(-30, -15)
+            # gun2.update(50, -15)
 
             monsters.update()
             monsters.draw(window)
@@ -249,30 +248,37 @@ def game_run():
 
             anim_hit.update()
 
-            score_text = font3.render("Score: " + str(score), True, (255, 255, 255))
+            score_text = font_.render("Score: " + str(score), True, (255, 255, 255))
             window.blit(score_text, (20, 20))
-            lost_text = font3.render("Lost: " + str(lost), True, (255, 255, 255))
+            lost_text = font_.render("Lost: " + str(lost), True, (255, 255, 255))
             window.blit(lost_text, (20, 45))
-            live_text = font3.render("Live: " + str(live), True, (150, 0, 0))
+            live_text = font_.render("Live: " + str(live), True, (150, 0, 0))
             window.blit(live_text, (20, 70))
 
             if score > 1:
                 boss.update()
+                boss.update_x()
                 col = sprite.spritecollide(boss, Bullets, True)
                 for c in col:
-                    x, y = c.rect.x - 10, c.rect.y - 10
-                    hit = Animation('images/anim11', x, y, 19)
-                    anim_hit.add(hit)
                     boss.live -= 1
                     score += 1
+
+            collide_boss_bullet_player = sprite.spritecollide(player, boss.boss_bullets, True)
+            for c in collide_boss_bullet_player:
+                x, y = c.rect.x - 13, c.rect.y - 10
+                hit = Animation('images/anim11', x, y, 19)
+                anim_hit.add(hit)
+                if live > 1:
+                    live -= 1
+                else:
+                    run = False
 
             collide = sprite.groupcollide(Bullets, monsters, True, True)
             for c in collide:
                 score += 1
                 monster = Enemy(choice(monsters_png), randint(0, window_width), -100, 50, 50, randint(1, 2))
                 monsters.add(monster)
-
-                x, y = c.rect.x-10, c.rect.y-10
+                x, y = c.rect.x+30, c.rect.y-10
                 hit = Animation('images/anim11', x, y, 19)
                 anim_hit.add(hit)
 
@@ -285,6 +291,16 @@ def game_run():
                 else:
                     run = False
 
+            if boss.boss_is_dead:
+                print_text(window, message="Win!", x=window_width / 2 - 50, y=window_height / 2,
+                           font_color=(0, 200, 0), font_type=None, font_size=70)
+                run = False
+
+            if live <= 0:
+                print_text(window, message="Lose!", x=window_width / 2 - 50, y=window_height / 2,
+                           font_color=(200, 0, 0), font_type=None, font_size=70)
+                run = False
+
         display.update()
         clock.tick(FPS)
 
@@ -295,5 +311,4 @@ def close_window():
         sys.exit()
 
 
-game_menu()
-
+game_run()
