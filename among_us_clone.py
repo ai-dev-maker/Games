@@ -12,6 +12,7 @@ pygame.display.set_caption("Among Us Clone")
 map_image = pygame.image.load("The_Skeld.webp")
 
 scale_factor = 3
+scaled_map = pygame.transform.scale(map_image, (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
 
 clock = pygame.time.Clock()
 FPS = 60
@@ -20,7 +21,7 @@ FPS = 60
 class GameSprite(pygame.sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__()
-        self.image = pygame.transform.scale(image.load(player_image), (player_width, player_height))
+        self.image = pygame.transform.scale(pygame.image.load(player_image), (player_width, player_height))
         self.speed = speed
         self.rect = self.image.get_rect()
         self.rect.x = player_x
@@ -31,50 +32,60 @@ class GameSprite(pygame.sprite.Sprite):
 
 
 class Player(GameSprite):
-    def __init__(self, player_image, player_x, player_y, player_width, player_height, player_speed=0):
-        super().__init__(player_image, player_x, player_y, player_width, player_height, player_speed)
-        last_direction = None
+    def __init__(self, player_image, map_x, map_y, player_width, player_height, speed=0):
+        super().__init__(player_image, map_x, map_y, player_width, player_height, speed)
+        self.map_x = map_x
+        self.map_y = map_y
 
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
-            self.rect.x -= player_speed
-            last_direction = 'left'
+            self.map_x += self.speed
         elif keys[pygame.K_d]:
-            self.rect.x += player_speed
-            last_direction = 'right'
-
+            self.map_x -= self.speed
         if keys[pygame.K_w]:
-            self.rect.y -= player_speed
-            last_direction = 'up'
+            self.map_y += self.speed
         elif keys[pygame.K_s]:
-            self.rect.y += player_speed
-            last_direction = 'down'
+            self.map_y -= self.speed
+
+        self.rect.x = (WIDTH // 2)
+        self.rect.y = (HEIGHT // 2)
 
 
-scaled_map = pygame.transform.scale(map_image, (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
+class Animation(pygame.sprite.Sprite):
+    def __init__(self, name_dir_anim, pos_x, pos_y, count_sprite):
+        super().__init__()
+        self.animation_set = [transform.scale(image.load(f"{name_dir_anim}/{i}.png"), (50, 50)) for i in range(1, count_sprite)]
+        self.i = 0
+        self.x = pos_x
+        self.y = pos_y
 
-player = Player('sprite.png', WIDTH / 2 - 50, HEIGHT / 2 - 50, 50, 50, 5)
+    def update(self):
+        window.blit(self.animation_set[self.i], (self.x-50, self.y))
+        self.i += 1
+        if self.i > len(self.animation_set) - 1:
+            self.kill()
 
 
-running = True
-while running:
-    clock.tick(FPS)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+def game_run():
+    player = Player('sprite.png', -1430, -190, 50, 50, 5)
 
-    map_x = WIDTH // 2
-    map_y = HEIGHT // 2
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    screen.blit(scaled_map, (-map_x, -map_y))
+        screen.blit(scaled_map, (player.map_x, player.map_y))
 
-    player.reset()
+        player.reset()
+        player.update()
 
-    player_center_x = WIDTH // 2
-    player_center_y = HEIGHT // 2
+        pygame.display.flip()
+        clock.tick(FPS)
 
-    pygame.display.flip()
+    pygame.quit()
+    sys.exit()
 
-pygame.quit()
-sys.exit()
+
+game_run()
