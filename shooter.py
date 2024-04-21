@@ -9,8 +9,10 @@ sprite_width, sprite_height = 70, 50
 window = display.set_mode((window_width, window_height))
 display.set_caption('Shooter')
 
+
 mixer.init()
 font.init()
+
 
 FPS = 60
 clock = time.Clock()
