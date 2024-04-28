@@ -16,7 +16,7 @@ FPS = 60
 sprite_running_right = None
 sprite_running_left = None
 
-width_sprite, height_sprite = 50, 60
+width_sprite, height_sprite = 40, 50
 
 run_right = [pygame.image.load("images/sprites/red_right0.png"), pygame.image.load("images/sprites/red_right1.png"),
              pygame.image.load("images/sprites/red_right2.png"), pygame.image.load("images/sprites/red_right3.png")]
@@ -74,54 +74,25 @@ class Player(GameSprite):
         super().__init__(player_image, map_x, map_y, player_width, player_height, speed)
         self.map_x = map_x
         self.map_y = map_y
-        self.left = False
-        self.right = False
-        self.stand = True
-        self.anim_count = 0
 
     def update(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_a]:
             self.map_x += self.speed
-            self.left = True
-            self.right = False
-            self.stand = False
         elif keys[pygame.K_d]:
             self.map_x -= self.speed
-            self.right = True
-            self.left = False
-            self.stand = False
         if keys[pygame.K_w]:
             self.map_y += self.speed
-            self.right = False
-            self.left = False
-            self.stand = True
         elif keys[pygame.K_s]:
             self.map_y -= self.speed
-            self.right = False
-            self.left = False
-            self.stand = True
-        else:
-            self.right = False
-            self.left = False
-            self.stand = True
-            self.anim_count = 0
+        elif keys[pygame.K_g]:
+            print(self.map_x, self.map_y)
 
-        self.rect.x = (WIDTH // 2)
-        self.rect.y = (HEIGHT // 2)
+        self.rect.x = self.map_x
+        self.rect.y = self.map_y
 
     def reset(self):
-        if self.anim_count + 1 >= FPS:
-            self.anim_count = 0
-
-        if self.stand:
-            screen.blit(self.image, self.rect)
-        if self.right:
-            screen.blit(run_right[self.anim_count // 4], self.rect)
-        if self.left:
-            pass
-
-        self.anim_count += 1
+        screen.blit(self.image, self.rect)
 
 
 class Animation(pygame.sprite.Sprite):
@@ -159,7 +130,11 @@ def game_run():
     scaled_map = pygame.transform.scale(map_image, (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
     player = Player('images/sprites/red_sprite.png', -1825, -136, width_sprite, height_sprite, 5)
 
-    wall1 = Wall(20, 200, -1825, -136, (200, 0, 0))
+    wall1 = Wall(20, 200, -1725, -136, (200, 0, 0))
+
+    walls = [wall1]
+
+    keys = pygame.key.get_pressed()
 
     running = True
     while running:
@@ -172,7 +147,15 @@ def game_run():
         player.reset()
         player.update()
 
-        wall1.reset()
+        for wall in walls:
+            wall.reset()
+            print("///")
+            # if pygame.sprite.collide_rect(player, wall):
+            #     player.speed = 0
+            #     if player.map_x >= WIDTH // 2 and keys[pygame.K_d]:
+            #         player.speed = 5
+            # else:
+            #  player.speed = 5
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -195,7 +178,7 @@ def game_menu():
 
         screen.blit(transform_map, (0, 0))
 
-        play_btn.draw(screen, WIDTH // 2 - 50, HEIGHT // 2 - 25, "Play", game_run, 30)
+        play_btn.draw(screen, WIDTH // 2 + 240, HEIGHT - 550, "Play", game_run, 30)
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -204,4 +187,4 @@ def game_menu():
     sys.exit()
 
 
-game_menu()
+game_run()
