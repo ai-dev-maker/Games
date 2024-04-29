@@ -1,6 +1,7 @@
 import pygame
 import sys
 import time
+import math
 
 pygame.init()
 
@@ -70,29 +71,54 @@ class GameSprite(pygame.sprite.Sprite):
 
 
 class Player(GameSprite):
-    def __init__(self, player_image, map_x, map_y, player_width, player_height, speed=0):
-        super().__init__(player_image, map_x, map_y, player_width, player_height, speed)
-        self.map_x = map_x
-        self.map_y = map_y
 
     def update(self):
+
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_a]:
-            self.map_x += self.speed
-        elif keys[pygame.K_d]:
-            self.map_x -= self.speed
-        if keys[pygame.K_w]:
-            self.map_y += self.speed
-        elif keys[pygame.K_s]:
-            self.map_y -= self.speed
-        elif keys[pygame.K_g]:
-            print(self.map_x, self.map_y)
 
-        self.rect.x = self.map_x
-        self.rect.y = self.map_y
+        if keys[pygame.K_a] and self.rect.x < 0:
+            if not self.check_collision(-self.speed, 0):
+                self.rect.x += self.speed
+            # self.image = pygame.transform.scale(image.load("images/sprites/red_sprite"), (self.rect.width, self.rect.height))
+        elif keys[pygame.K_d] and self.rect.x < screen.get_width() - 50:
+            if not self.check_collision(self.speed, 0):
+                self.rect.x -= self.speed
+            # self.image = pygame.transform.scale(image.load("Pright.png"), (self.rect.width, self.rect.height))
 
-    def reset(self):
-        screen.blit(self.image, self.rect)
+        elif keys[pygame.K_w] and self.rect.y < 0:
+            if not self.check_collision(0, -self.speed):
+                self.rect.y += self.speed
+            # self.image = pygame.transform.scale(image.load("Pup.png"), (self.rect.width, self.rect.height))
+        elif keys[pygame.K_s] and self.rect.y < screen.get_height() - 50:
+            if not self.check_collision(0, self.speed):
+                self.rect.y -= self.speed
+            # self.image = pygame.transform.scale(image.load("Pdown.png"), (self.rect.width, self.rect.height))
+        if keys[pygame.K_g]:
+            print(self.rect.x, self.rect.y)
+
+    def check_collision(self, x_shift, y_shift):
+        new_rect = self.rect.move(x_shift, y_shift)
+        for wall in GroupWall:
+            wall.reset()
+
+            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
+            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
+
+            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
+
+            if distance <= float(0):
+                print('000')
+                return True
+
+            if distance <= self.speed:
+                print('111')
+                return True
+
+            if new_rect.colliderect(wall.rect):
+                print('222')
+                return True
+
+        return False
 
 
 class Animation(pygame.sprite.Sprite):
@@ -123,18 +149,20 @@ class Wall(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
 
+GroupWall = pygame.sprite.Group()
+
+wall1 = Wall(50, 200, -1625, -136, (255, 255, 255))
+wall2 = Wall(200, 50, -1725, -136, (255, 255, 255))
+
+GroupWall.add(wall1, wall2)
+
+
 def game_run():
     map_image = pygame.image.load("images/map/The_Skeld_map.webp")
 
     scale_factor = 0.5
     scaled_map = pygame.transform.scale(map_image, (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
-    player = Player('images/sprites/red_sprite.png', -1825, -136, width_sprite, height_sprite, 5)
-
-    wall1 = Wall(20, 200, -1725, -136, (200, 0, 0))
-
-    walls = [wall1]
-
-    keys = pygame.key.get_pressed()
+    player = Player('images/sprites/red_sprite.png', -1925, -100, width_sprite, height_sprite, 5)
 
     running = True
     while running:
@@ -142,20 +170,10 @@ def game_run():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.blit(scaled_map, (player.map_x, player.map_y))
+        screen.blit(scaled_map, (player.rect.x, player.rect.y))
 
         player.reset()
         player.update()
-
-        for wall in walls:
-            wall.reset()
-            print("///")
-            # if pygame.sprite.collide_rect(player, wall):
-            #     player.speed = 0
-            #     if player.map_x >= WIDTH // 2 and keys[pygame.K_d]:
-            #         player.speed = 5
-            # else:
-            #  player.speed = 5
 
         pygame.display.flip()
         clock.tick(FPS)
