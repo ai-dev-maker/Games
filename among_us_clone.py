@@ -6,6 +6,9 @@ import math
 pygame.init()
 
 WIDTH, HEIGHT = 800, 600
+SCENE_WIDTH = 8565
+SCENE_HEIGHT = 4794
+
 SCREEN_SIZE = (WIDTH, HEIGHT)
 
 screen = pygame.display.set_mode(SCREEN_SIZE)
@@ -31,7 +34,7 @@ class Button:
         self.active_color = active_color
         self.display = display
 
-    def draw(self, display,  x, y, message, action=None, font_size=35):
+    def draw(self, display, x, y, message, action=None, font_size=35):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
@@ -44,7 +47,7 @@ class Button:
         else:
             pygame.draw.rect(display, self.inactive_color, (x, y, self.width, self.height))
 
-        print_text(display, message=message, x=x+10, y=y+10, font_color=(0, 0, 0), font_size=font_size)
+        print_text(display, message=message, x=x + 10, y=y + 10, font_color=(0, 0, 0), font_size=font_size)
 
     def is_clicked(self, mouse_pos):
         button_rect = pygame.Rect(0, 0, self.width, self.height)
@@ -73,26 +76,39 @@ class GameSprite(pygame.sprite.Sprite):
 class Player(GameSprite):
 
     def update(self):
+        global cam_x
+        global cam_y
 
         keys = pygame.key.get_pressed()
 
-        if keys[pygame.K_a] and self.rect.x < 0:
-            if not self.check_collision(-self.speed, 0):
-                self.rect.x += self.speed
-            # self.image = pygame.transform.scale(image.load("images/sprites/red_sprite"), (self.rect.width, self.rect.height))
-        elif keys[pygame.K_d] and self.rect.x < screen.get_width() - 50:
-            if not self.check_collision(self.speed, 0):
-                self.rect.x -= self.speed
-            # self.image = pygame.transform.scale(image.load("Pright.png"), (self.rect.width, self.rect.height))
+        if keys[pygame.K_w]:
+            if self.rect.y < 250 and cam_y + self.speed <= 0:
+                cam_y += self.speed
+            elif self.rect.y > 10:
+                if not self.check_collision(0, -self.speed):
+                    self.rect.y -= self.speed
 
-        elif keys[pygame.K_w] and self.rect.y < 0:
-            if not self.check_collision(0, -self.speed):
-                self.rect.y += self.speed
-            # self.image = pygame.transform.scale(image.load("Pup.png"), (self.rect.width, self.rect.height))
-        elif keys[pygame.K_s] and self.rect.y < screen.get_height() - 50:
-            if not self.check_collision(0, self.speed):
-                self.rect.y -= self.speed
-            # self.image = pygame.transform.scale(image.load("Pdown.png"), (self.rect.width, self.rect.height))
+        if keys[pygame.K_s]:
+            if self.rect.y > HEIGHT - 250 and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
+                cam_y -= self.speed
+            elif self.rect.y < HEIGHT - 50:
+                if not self.check_collision(0, self.speed):
+                    self.rect.y += self.speed
+
+        if keys[pygame.K_a]:
+            if self.rect.x < 300 and cam_x + self.speed <= 0:
+                cam_x += self.speed
+            elif self.rect.x > 0:
+                if not self.check_collision(-self.speed, 0):
+                    self.rect.x -= self.speed
+
+        if keys[pygame.K_d]:
+            if self.rect.x > WIDTH - 300 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
+                cam_x -= self.speed
+            elif self.rect.x < WIDTH - 50:
+                if not self.check_collision(self.speed, 0):
+                    self.rect.x += self.speed
+
         if keys[pygame.K_g]:
             print(self.rect.x, self.rect.y)
 
@@ -124,7 +140,9 @@ class Player(GameSprite):
 class Animation(pygame.sprite.Sprite):
     def __init__(self, name_dir_anim, pos_x, pos_y, count_sprite):
         super().__init__()
-        self.animation_set = [pygame.transform.scale(pygame.image.load(f"{name_dir_anim}/{i}.png"), (width_sprite, height_sprite)) for i in range(1, count_sprite)]
+        self.animation_set = [
+            pygame.transform.scale(pygame.image.load(f"{name_dir_anim}/{i}.png"), (width_sprite, height_sprite)) for i
+            in range(1, count_sprite)]
         self.i = 0
         self.x = pos_x
         self.y = pos_y
@@ -151,18 +169,23 @@ class Wall(pygame.sprite.Sprite):
 
 GroupWall = pygame.sprite.Group()
 
-wall1 = Wall(50, 200, -1625, -136, (255, 255, 255))
+wall1 = Wall(50, 200, -100, -100, (255, 255, 255))
 wall2 = Wall(200, 50, -1725, -136, (255, 255, 255))
 
 GroupWall.add(wall1, wall2)
+
+player = Player('images/sprites/red_sprite.png', 0, 0, width_sprite, height_sprite, 5)
+
+cam_x = -player.rect.x - WIDTH // 2
+cam_y = -player.rect.y - HEIGHT // 2
 
 
 def game_run():
     map_image = pygame.image.load("images/map/The_Skeld_map.webp")
 
     scale_factor = 0.5
-    scaled_map = pygame.transform.scale(map_image, (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
-    player = Player('images/sprites/red_sprite.png', -1925, -100, width_sprite, height_sprite, 5)
+    scaled_map = pygame.transform.scale(map_image,
+                                        (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
 
     running = True
     while running:
@@ -170,7 +193,7 @@ def game_run():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.blit(scaled_map, (player.rect.x, player.rect.y))
+        screen.blit(scaled_map, (cam_x, cam_y))
 
         player.reset()
         player.update()
@@ -194,7 +217,7 @@ def game_menu():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.blit(transform_map, (0, 0))
+        screen.blit(transform_map, (cam_x, cam_y))
 
         play_btn.draw(screen, WIDTH // 2 + 240, HEIGHT - 550, "Play", game_run, 30)
 
