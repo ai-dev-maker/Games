@@ -74,7 +74,6 @@ class GameSprite(pygame.sprite.Sprite):
 
 
 class Player(GameSprite):
-
     def update(self):
         global cam_x
         global cam_y
@@ -82,35 +81,32 @@ class Player(GameSprite):
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
-            if self.rect.y < 250 and cam_y + self.speed <= 0:
+            if self.rect.y < HEIGHT // 2 - height_sprite and cam_y + self.speed <= 0:
                 cam_y += self.speed
             elif self.rect.y > 10:
                 if not self.check_collision(0, -self.speed):
                     self.rect.y -= self.speed
 
         if keys[pygame.K_s]:
-            if self.rect.y > HEIGHT - 250 and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
+            if self.rect.y > HEIGHT // 2 - height_sprite and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
                 cam_y -= self.speed
             elif self.rect.y < HEIGHT - 50:
                 if not self.check_collision(0, self.speed):
                     self.rect.y += self.speed
 
         if keys[pygame.K_a]:
-            if self.rect.x < 300 and cam_x + self.speed <= 0:
+            if self.rect.x < WIDTH // 2 and cam_x + self.speed <= 0:
                 cam_x += self.speed
             elif self.rect.x > 0:
                 if not self.check_collision(-self.speed, 0):
                     self.rect.x -= self.speed
 
         if keys[pygame.K_d]:
-            if self.rect.x > WIDTH - 300 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
+            if self.rect.x > WIDTH // 2 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
                 cam_x -= self.speed
             elif self.rect.x < WIDTH - 50:
                 if not self.check_collision(self.speed, 0):
                     self.rect.x += self.speed
-
-        if keys[pygame.K_g]:
-            print(self.rect.x, self.rect.y)
 
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
@@ -135,6 +131,9 @@ class Player(GameSprite):
                 return True
 
         return False
+
+    def controls(self):
+        pass
 
 
 class Animation(pygame.sprite.Sprite):
@@ -174,7 +173,9 @@ wall2 = Wall(200, 50, -1725, -136, (255, 255, 255))
 
 GroupWall.add(wall1, wall2)
 
-player = Player('images/sprites/red_sprite.png', 0, 0, width_sprite, height_sprite, 5)
+
+player = Player('images/sprites/red_sprite.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
+                width_sprite, height_sprite, 5)
 
 cam_x = -player.rect.x - WIDTH // 2
 cam_y = -player.rect.y - HEIGHT // 2
@@ -187,16 +188,25 @@ def game_run():
     scaled_map = pygame.transform.scale(map_image,
                                         (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
 
+    keys = pygame.key.get_pressed()
+
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            # if event.type == pygame.KEYDOWN:
+            #     if keys[pygame.K_TAB]:
+            #         open_mini_map()
+            # if event.type == pygame.KEYUP:
+            #     if keys[pygame.K_TAB]:
+            #         showing_mini_map = False
 
         screen.blit(scaled_map, (cam_x, cam_y))
 
         player.reset()
         player.update()
+        player.controls()
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -210,6 +220,8 @@ def game_menu():
     transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
 
     play_btn = Button(105, 45, (100, 0, 0), (150, 0, 0), screen)
+    settings_btn = Button(185, 45, (100, 0, 0), (150, 0, 0), screen)
+    quit_btn = Button(105, 45, (100, 0, 0), (150, 0, 0), screen)
 
     running = True
     while running:
@@ -217,9 +229,11 @@ def game_menu():
             if event.type == pygame.QUIT:
                 running = False
 
-        screen.blit(transform_map, (cam_x, cam_y))
+        screen.blit(transform_map, (0, 0))
 
-        play_btn.draw(screen, WIDTH // 2 + 240, HEIGHT - 550, "Play", game_run, 30)
+        play_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Play", game_run, 30)
+        settings_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 520, "Settings", None, 30)
+        quit_btn.draw(screen, WIDTH // 2 + 270, HEIGHT - 570, "Quit", close, 30)
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -228,4 +242,32 @@ def game_menu():
     sys.exit()
 
 
-game_run()
+def open_mini_map():
+    map_image = pygame.image.load("images/map/mini_map.png")
+    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+
+    running = True
+    showing_mini_map = True
+
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        if showing_mini_map:
+            screen.blit(transform_map, (0, 0))
+
+            pygame.display.flip()
+            clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
+
+
+def close():
+    click = pygame.mouse.get_pressed()
+    if click[0] == 1:
+        sys.exit()
+
+
+game_menu()
