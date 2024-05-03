@@ -41,7 +41,7 @@ class Button:
             pygame.draw.rect(display, self.active_color, (x, y, self.width, self.height))
             if click[0] == 1:
                 # pygame.mixer.Sound.play(button_sound)
-                pygame.time.delay(3)
+                pygame.time.delay(100)
                 if action is not None:
                     action()
         else:
@@ -68,12 +68,18 @@ class GameSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = player_x
         self.rect.y = player_y
+        self.width_sprite = width_sprite
+        self.height_sprite = height_sprite
 
     def reset(self):
         screen.blit(self.image, self.rect)
 
 
 class Player(GameSprite):
+    def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
+        GameSprite.__init__(self, player_image, player_x, player_y, player_width, player_height, speed=0)
+        self.counter = 0
+
     def update(self):
         global cam_x
         global cam_y
@@ -86,27 +92,66 @@ class Player(GameSprite):
             elif self.rect.y > 10:
                 if not self.check_collision(0, -self.speed):
                     self.rect.y -= self.speed
+            self.animation(kind='right')
 
-        if keys[pygame.K_s]:
+        elif keys[pygame.K_s]:
             if self.rect.y > HEIGHT // 2 - height_sprite and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
                 cam_y -= self.speed
             elif self.rect.y < HEIGHT - 50:
                 if not self.check_collision(0, self.speed):
                     self.rect.y += self.speed
+            self.animation(kind='left')
 
-        if keys[pygame.K_a]:
+        elif keys[pygame.K_a]:
             if self.rect.x < WIDTH // 2 and cam_x + self.speed <= 0:
                 cam_x += self.speed
             elif self.rect.x > 0:
                 if not self.check_collision(-self.speed, 0):
                     self.rect.x -= self.speed
+            self.animation(kind='left')
 
-        if keys[pygame.K_d]:
+        elif keys[pygame.K_d]:
             if self.rect.x > WIDTH // 2 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
                 cam_x -= self.speed
             elif self.rect.x < WIDTH - 50:
                 if not self.check_collision(self.speed, 0):
                     self.rect.x += self.speed
+            self.animation(kind='right')
+
+        else:
+            self.animation(kind='stay')
+
+    def animation(self, kind):
+        if kind == 'stay':
+            self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_sprite.png"), (self.width_sprite, self.height_sprite))
+
+        elif kind == 'right':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right0.png"), (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right1.png"), (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right2.png"), (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right3.png"), (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
+
+        elif kind == 'left':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left0.png"), (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"), (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left2.png"), (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"), (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
 
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
@@ -134,23 +179,6 @@ class Player(GameSprite):
 
     def controls(self):
         pass
-
-
-class Animation(pygame.sprite.Sprite):
-    def __init__(self, name_dir_anim, pos_x, pos_y, count_sprite):
-        super().__init__()
-        self.animation_set = [
-            pygame.transform.scale(pygame.image.load(f"{name_dir_anim}/{i}.png"), (width_sprite, height_sprite)) for i
-            in range(1, count_sprite)]
-        self.i = 0
-        self.x = pos_x
-        self.y = pos_y
-
-    def update(self):
-        screen.blit(self.animation_set[self.i], (self.x, self.y))
-        self.i += 1
-        if self.i > len(self.animation_set) - 1:
-            self.kill()
 
 
 class Wall(pygame.sprite.Sprite):
@@ -206,9 +234,8 @@ def game_run():
 
         player.reset()
         player.update()
-        player.controls()
 
-        pygame.display.flip()
+        pygame.display.update()
         clock.tick(FPS)
 
     pygame.quit()
@@ -216,7 +243,11 @@ def game_run():
 
 
 def game_menu():
-    map_image = pygame.image.load("images/map/menu.webp")
+    # pygame.mixer.init()
+    # pygame.mixer.music.load('music/among_us_impostor.mp3')
+    # pygame.mixer.music.play()
+
+    map_image = pygame.image.load("images/map/main_menu.jpg")
     transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
 
     play_btn = Button(105, 45, (100, 0, 0), (150, 0, 0), screen)
@@ -232,8 +263,31 @@ def game_menu():
         screen.blit(transform_map, (0, 0))
 
         play_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Play", game_run, 30)
-        settings_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 520, "Settings", None, 30)
+        settings_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 520, "Settings", settings, 30)
         quit_btn.draw(screen, WIDTH // 2 + 270, HEIGHT - 570, "Quit", close, 30)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
+
+
+def settings():
+    map_image = pygame.image.load("images/map/main_menu.jpg")
+    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+
+    back_btn = Button(115, 45, (100, 0, 0), (150, 0, 0), screen)
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        screen.blit(transform_map, (0, 0))
+
+        back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
 
         pygame.display.flip()
         clock.tick(FPS)
