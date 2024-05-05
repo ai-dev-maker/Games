@@ -77,7 +77,7 @@ class GameSprite(pygame.sprite.Sprite):
 
 class Player(GameSprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
-        GameSprite.__init__(self, player_image, player_x, player_y, player_width, player_height, speed=0)
+        super().__init__(player_image, player_x, player_y, player_width, player_height, 5)
         self.counter = 0
 
     def update(self):
@@ -121,42 +121,13 @@ class Player(GameSprite):
         else:
             self.animation(kind='stay')
 
-    def animation(self, kind):
-        if kind == 'stay':
-            self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_sprite.png"), (self.width_sprite, self.height_sprite))
-
-        elif kind == 'right':
-            self.counter += 1
-            if 0 <= self.counter < 15:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right0.png"), (self.width_sprite, self.height_sprite))
-            elif 15 <= self.counter < 30:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right1.png"), (self.width_sprite, self.height_sprite))
-            elif 30 <= self.counter < 45:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right2.png"), (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 60:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right3.png"), (self.width_sprite, self.height_sprite))
-
-            if self.counter > 60:
-                self.counter = 0
-
-        elif kind == 'left':
-            self.counter += 1
-            if 0 <= self.counter < 15:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left0.png"), (self.width_sprite, self.height_sprite))
-            elif 15 <= self.counter < 30:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"), (self.width_sprite, self.height_sprite))
-            elif 30 <= self.counter < 45:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left2.png"), (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 60:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"), (self.width_sprite, self.height_sprite))
-
-            if self.counter > 60:
-                self.counter = 0
+        if keys[pygame.K_g]:
+            print(self.rect.x, self.rect.y)
 
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
         for wall in GroupWall:
-            wall.reset()
+            # wall.reset()
 
             wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
             wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
@@ -164,24 +135,60 @@ class Player(GameSprite):
             distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
 
             if distance <= float(0):
-                print('000')
                 return True
 
             if distance <= self.speed:
-                print('111')
                 return True
 
             if new_rect.colliderect(wall.rect):
-                print('222')
                 return True
 
         return False
 
-    def controls(self):
-        pass
+    def animation(self, kind):
+        if kind == 'stay':
+            self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_sprite.png"),
+                                                (self.width_sprite, self.height_sprite))
+
+        elif kind == 'right':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right0.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right2.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right3.png"),
+                                                    (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
+
+        elif kind == 'left':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left0.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left2.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
 
 
 class Wall(pygame.sprite.Sprite):
+
     def __init__(self, wall_width, wall_height, wall_x, wall_y, color):
         super().__init__()
         self.image = pygame.Surface((wall_width, wall_height))
@@ -190,23 +197,123 @@ class Wall(pygame.sprite.Sprite):
         self.rect.x = wall_x
         self.rect.y = wall_y
 
+        self.local_x = wall_x
+        self.local_y = wall_y
+
+    def update(self):
+        self.rect.x = (self.local_x + cam_x)
+        self.rect.y = (self.local_y + cam_y)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_h]:
+            print(self.rect.x, self.rect.y)
+
+        # print(self.rect)
+
+        screen.blit(self.image, self.rect)
+
     def reset(self):
         screen.blit(self.image, self.rect)
 
 
+class Bot(GameSprite):
+    def __init__(self, bot_image, bot_x, bot_y, bot_width, bot_height, speed=0):
+        super().__init__(bot_image, bot_x, bot_y, bot_width, bot_height, 5)
+        self.counter = 0
+
+    def update(self, player_rect):
+        different_x = player_rect.x - self.rect.x
+        different_y = player_rect.y - self.rect.y
+
+        if abs(different_x) > abs(different_y):
+            if different_x > 0:
+                self.rect.x += self.speed - 3
+                self.animation(kind="right")
+            else:
+                self.rect.x -= self.speed - 3
+                self.animation(kind="left")
+        else:
+            if different_y > 0:
+                self.rect.y += self.speed - 3
+            else:
+                self.rect.y -= self.speed - 3
+
+    def animation(self, kind):
+        if kind == 'stay':
+            self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_sprite.png"),
+                                                (self.width_sprite, self.height_sprite))
+
+        elif kind == 'right':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right0.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right2.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right3.png"),
+                                                    (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
+
+        elif kind == 'left':
+            self.counter += 1
+            if 0 <= self.counter < 15:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left0.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 15 <= self.counter < 30:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 30 <= self.counter < 45:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left2.png"),
+                                                    (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
+                                                    (self.width_sprite, self.height_sprite))
+
+            if self.counter > 60:
+                self.counter = 0
+
+
 GroupWall = pygame.sprite.Group()
 
-wall1 = Wall(50, 200, -100, -100, (255, 255, 255))
-wall2 = Wall(200, 50, -1725, -136, (255, 255, 255))
+wall1 = Wall(770, 13, 1157, 480, (255, 0, 255))
+wall2 = Wall(13, 192, 1153, 585, (255, 0, 255))
+wall3 = Wall(447, 13, 1153, 585, (255, 0, 255))
+wall4 = Wall(13, 132, 1598, 585, (255, 0, 255))
+wall5 = Wall(132, 13, 1478, 705, (255, 0, 255))
+wall6 = Wall(13, 423, 1477, 635, (255, 0, 255))
+wall7 = Wall(13, 240, 1868, 640, (255, 0, 255))
+wall8 = Wall(13, 215, 1922, 588, (255, 0, 255))
+wall9 = Wall(13, 295, 1922, 198, (255, 0, 255))
+wall10 = Wall(195, 13, 1740, 586, (255, 0, 255))
+wall11 = Wall(13, 132, 1730, 586, (255, 0, 255))
+wall12 = Wall(150, 13, 1730, 705, (255, 0, 255))
+wall13 = Wall(13, 878, 2024, 1020, (255, 0, 255))
+wall14 = Wall(510, 13, 1524, 1147, (255, 0, 255))
+wall15 = Wall(220, 13, 2150, 1023, (255, 0, 255))
+wall16 = Wall(220, 13, 2488, 1023, (255, 0, 255))
+wall17 = Wall(13, 210, 2492, 1023, (255, 0, 255))
+wall18 = Wall(13, 350, 2353, 1023, (255, 0, 255))
+wall19 = Wall(200, 13, 2160, 1360, (255, 0, 255))
+wall20 = Wall(700, 13, 1330, 1988, (255, 0, 255))
+wall21 = Wall(13, 150, 1324, 1838, (255, 0, 255))
 
-GroupWall.add(wall1, wall2)
+GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10, wall11, wall12, wall13,
+              wall14, wall15, wall16, wall17, wall18, wall19, wall20, wall21)
 
+# bot1 = Bot("images/sprites/red_sprite.png", 1000, 100, width_sprite, height_sprite, 3)
 
 player = Player('images/sprites/red_sprite.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
                 width_sprite, height_sprite, 5)
 
-cam_x = -player.rect.x - WIDTH // 2
-cam_y = -player.rect.y - HEIGHT // 2
+cam_x = -player.rect.x - WIDTH // 2 - 1050
+cam_y = -player.rect.y - HEIGHT // 2 + 350
 
 
 def game_run():
@@ -229,11 +336,15 @@ def game_run():
             # if event.type == pygame.KEYUP:
             #     if keys[pygame.K_TAB]:
             #         showing_mini_map = False
-
         screen.blit(scaled_map, (cam_x, cam_y))
 
         player.reset()
         player.update()
+
+        # bot1.reset()
+        # bot1.update(player.rect)
+
+        GroupWall.update()
 
         pygame.display.update()
         clock.tick(FPS)
@@ -288,6 +399,28 @@ def settings():
         screen.blit(transform_map, (0, 0))
 
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+    pygame.quit()
+    sys.exit()
+
+
+def lobby():
+    map_image = pygame.image.load("images/map/lobby.png")
+    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+        screen.blit(transform_map, (0, 0))
+
+        player.reset()
+        player.update()
 
         pygame.display.flip()
         clock.tick(FPS)
