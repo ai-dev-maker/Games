@@ -351,11 +351,51 @@ wall59 = Wall(230, 180, 2515, 215, (255, 0, 255))
 wall60 = Wall(230, 150, 2515, 720, (255, 0, 255))
 wall61 = Wall(230, 150, 2055, 720, (255, 0, 255))
 
+wall62 = Wall(360, 220, 724, 1538, (255, 0, 255))
+wall63 = Wall(13, 450, 724, 1408, (255, 0, 255))
+wall64 = Wall(150, 100, 724, 1838, (255, 0, 255))
+wall65 = Wall(140, 170, 624, 1288, (255, 0, 255))
+wall66 = Wall(140, 170, 624, 763, (255, 0, 255))
+wall67 = Wall(13, 400, 719, 370, (255, 0, 255))
+wall68 = Wall(210, 13, 428, 763, (255, 0, 255))
+wall69 = Wall(13, 660, 428, 763, (255, 0, 255))
+wall70 = Wall(200, 13, 428, 1403, (255, 0, 255))
+wall71 = Wall(100, 260, 428, 920, (255, 0, 255))
+wall72 = Wall(360, 220, 724, 450, (255, 0, 255))
+wall73 = Wall(70, 13, 719, 380, (255, 0, 255))
+wall74 = Wall(370, 13, 789, 360, (255, 0, 255))
+wall75 = Wall(13, 130, 1159, 360, (255, 0, 255))
+
+wall76 = Wall(260, 13, 1174, 1283, (255, 0, 255))  # Security
+wall77 = Wall(13, 410, 1419, 873, (255, 0, 255))
+wall78 = Wall(100, 130, 1349, 1030, (255, 0, 255))
+wall79 = Wall(50, 13, 1369, 873, (255, 0, 255))
+wall80 = Wall(50, 13, 1184, 873, (255, 0, 255))
+wall81 = Wall(180, 13, 1219, 843, (255, 0, 255))
+wall82 = Wall(50, 140, 1479, 1050, (255, 0, 255))
+wall83 = Wall(20, 225, 1979, 855, (255, 0, 255))
+wall84 = Wall(20, 220, 1929, 810, (255, 0, 255))
+wall85 = Wall(20, 140, 1871, 840, (255, 0, 255))
+wall86 = Wall(20, 50, 2039, 920, (255, 0, 255))
+wall87 = Wall(20, 50, 2109, 990, (255, 0, 255))
+
+wall88 = Wall(20, 140, 1979, 1400, (255, 0, 255))  # part of electrical room
+wall89 = Wall(20, 140, 1939, 1430, (255, 0, 255))
+wall90 = Wall(20, 70, 1889, 1670, (255, 0, 255))
+wall91 = Wall(20, 70, 1859, 1710, (255, 0, 255))
+wall92 = Wall(230, 110, 1570, 1450, (255, 0, 255))
+
+wall93 = Wall(20, 50, 2070, 960, (255, 0, 255))
+
+
 GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10, wall11, wall12, wall13,
               wall14, wall15, wall16, wall17, wall18, wall19, wall20, wall21, wall22, wall23, wall24, wall25,
               wall26, wall27, wall28, wall29, wall30, wall31, wall32, wall33, wall34, wall35, wall36, wall37,
               wall38, wall39, wall40, wall41, wall42, wall43, wall44, wall45, wall46, wall47, wall48, wall49,
-              wall50, wall51, wall52, wall53, wall54, wall55, wall56, wall57, wall58, wall59, wall60, wall61)
+              wall50, wall51, wall52, wall53, wall54, wall55, wall56, wall57, wall58, wall59, wall60, wall61,
+              wall62, wall63, wall64, wall65, wall66, wall67, wall68, wall69, wall70, wall71, wall72, wall73,
+              wall74, wall75, wall76, wall77, wall78, wall79, wall80, wall81, wall82, wall83, wall84, wall85,
+              wall86, wall87, wall88, wall89, wall90, wall91, wall92, wall93)
 
 GroupCrewmate = pygame.sprite.Group()
 
@@ -393,17 +433,17 @@ def game_run():
 
         GroupWall.update()
 
-        crewmate1.reset()
-        crewmate1.update(player.rect)
-
-        impostor.reset()
-        impostor.update(crewmate1.rect, player.rect)
-
-        collide = pygame.sprite.spritecollide(impostor, GroupCrewmate, False, False)
-        for crewmate in collide:
-            if collide:
-                crewmate.speed = 0
-                crewmate.animation(kind='dead')
+        # crewmate1.reset()
+        # crewmate1.update(player.rect)
+        #
+        # impostor.reset()
+        # impostor.update(crewmate1.rect, player.rect)
+        #
+        # collide = pygame.sprite.spritecollide(impostor, GroupCrewmate, False, False)
+        # for crewmate in collide:
+        #     if collide:
+        #         crewmate.speed = 0
+        #         crewmate.animation(kind='dead')
 
         pygame.display.update()
         clock.tick(FPS)
