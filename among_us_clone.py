@@ -386,6 +386,27 @@ wall91 = Wall(20, 70, 1859, 1710, (255, 0, 255))
 wall92 = Wall(230, 110, 1570, 1450, (255, 0, 255))
 
 wall93 = Wall(20, 50, 2070, 960, (255, 0, 255))
+wall94 = Wall(20, 50, 2070, 30, (255, 0, 255))
+wall95 = Wall(20, 50, 2020, 90, (255, 0, 255))
+wall96 = Wall(20, 50, 1970, 150, (255, 0, 255))
+wall97 = Wall(600, 13, 2100, 50, (255, 0, 255))
+wall98 = Wall(20, 70, 2700, 30, (255, 0, 255))
+wall99 = Wall(20, 50, 2750, 90, (255, 0, 255))
+wall100 = Wall(20, 50, 2800, 150, (255, 0, 255))
+wall101 = Wall(20, 50, 2850, 210, (255, 0, 255))
+wall102 = Wall(20, 50, 2900, 270, (255, 0, 255))
+wall103 = Wall(13, 200, 2940, 288, (255, 0, 255))
+wall104 = Wall(13, 340, 2940, 588, (255, 0, 255))
+wall105 = Wall(410, 20, 2870, 858, (255, 0, 0))
+wall106 = Wall(130, 20, 2830, 898, (255, 0, 255))
+wall107 = Wall(130, 20, 2790, 938, (255, 0, 255))
+wall108 = Wall(130, 20, 2740, 978, (255, 0, 255))
+wall109 = Wall(500, 13, 2720, 1038, (255, 0, 255))
+wall110 = Wall(13, 65, 3190, 1000, (255, 0, 255))
+wall111 = Wall(50, 20, 2900, 828, (255, 0, 255))
+wall112 = Wall(308, 13, 3190, 988, (255, 0, 255))
+wall113 = Wall(260, 13, 3635, 988, (255, 0, 255))
+wall114 = Wall(260, 13, 3635, 1108, (255, 0, 255))
 
 
 GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10, wall11, wall12, wall13,
@@ -395,7 +416,9 @@ GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wal
               wall50, wall51, wall52, wall53, wall54, wall55, wall56, wall57, wall58, wall59, wall60, wall61,
               wall62, wall63, wall64, wall65, wall66, wall67, wall68, wall69, wall70, wall71, wall72, wall73,
               wall74, wall75, wall76, wall77, wall78, wall79, wall80, wall81, wall82, wall83, wall84, wall85,
-              wall86, wall87, wall88, wall89, wall90, wall91, wall92, wall93)
+              wall86, wall87, wall88, wall89, wall90, wall91, wall92, wall93, wall94, wall95, wall96, wall97,
+              wall98, wall99, wall100, wall101, wall102, wall103, wall104, wall105, wall106, wall107, wall108,
+              wall109, wall110, wall111, wall112, wall113, wall114)
 
 GroupCrewmate = pygame.sprite.Group()
 
