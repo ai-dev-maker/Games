@@ -1,7 +1,7 @@
-import pygame
-import sys
-import time
-import math
+import pygame  # Підключення основної бібліотеки
+import sys  # Для роботи із системою
+import time  # Для роботи із часом
+import math  # Для роботи із математикою
 
 pygame.init()
 
@@ -17,13 +17,7 @@ pygame.display.set_caption("Among Us Clone")
 clock = pygame.time.Clock()
 FPS = 60
 
-sprite_running_right = None
-sprite_running_left = None
-
 width_sprite, height_sprite = 40, 50
-
-run_right = [pygame.image.load("images/sprites/red_right0.png"), pygame.image.load("images/sprites/red_right1.png"),
-             pygame.image.load("images/sprites/red_right2.png"), pygame.image.load("images/sprites/red_right3.png")]
 
 
 class Button:
@@ -120,6 +114,27 @@ class GameSprite(pygame.sprite.Sprite):
             self.image = pygame.transform.scale(pygame.image.load("images/sprites/white.png"),
                                                 (self.width_sprite, self.height_sprite))
 
+    def check_collision(self, x_shift, y_shift):
+        new_rect = self.rect.move(x_shift, y_shift)
+        for wall in GroupWall:
+            # wall.reset()
+
+            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
+            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
+
+            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
+
+            if distance <= float(0):
+                return True
+
+            if distance <= self.speed:
+                return True
+
+            if new_rect.colliderect(wall.rect):
+                return True
+
+        return False
+
     def reset(self):
         screen.blit(self.image, self.rect)
 
@@ -172,27 +187,6 @@ class Player(GameSprite):
 
         if keys[pygame.K_g]:
             print(self.rect.x, self.rect.y)
-
-    def check_collision(self, x_shift, y_shift):
-        new_rect = self.rect.move(x_shift, y_shift)
-        for wall in GroupWall:
-            # wall.reset()
-
-            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
-            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
-
-            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
-
-            if distance <= float(0):
-                return True
-
-            if distance <= self.speed:
-                return True
-
-            if new_rect.colliderect(wall.rect):
-                return True
-
-        return False
 
 
 class Wall(pygame.sprite.Sprite):
@@ -252,37 +246,26 @@ class Impostor(GameSprite):
         super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 5)
         self.counter = 0
 
-    def update(self, bot_rect, player_rect):
-        different_bot_x = bot_rect.x - self.rect.x
-        different_bot_y = bot_rect.y - self.rect.y
+    def update(self, player_rect):
+        different_x = player_rect.x - self.rect.x
+        different_y = player_rect.y - self.rect.y
 
-        different_player_x = player_rect.x - self.rect.x
-        different_player_y = player_rect.y - self.rect.x
-
-        if abs(different_bot_x) and abs(different_bot_y) < abs(different_player_x) and abs(different_player_y):
-            if different_player_x > 0:
-                self.rect.x += self.speed - 3
-                self.animation(kind="right")
+        if abs(different_x) > abs(different_y):
+            if different_x > 0:
+                if not self.check_collision(0, self.speed):
+                    self.rect.x += self.speed - 4
+                    self.animation(kind="right")
             else:
-                self.rect.x -= self.speed - 3
-                self.animation(kind="left")
-
-            if different_player_y > 0:
-                self.rect.y += self.speed - 3
-            else:
-                self.rect.y -= self.speed - 3
+                if not self.check_collision(-self.speed, 0):
+                    self.rect.x -= self.speed - 4
+                    self.animation(kind="left")
         else:
-            if different_bot_x > 0:
-                self.rect.x += self.speed - 3
-                self.animation(kind="right")
+            if different_y > 0:
+                if not self.check_collision(0, -self.speed):
+                    self.rect.y += self.speed - 4
             else:
-                self.rect.x -= self.speed - 3
-                self.animation(kind="left")
-
-            if different_bot_y > 0:
-                self.rect.y += self.speed - 3
-            else:
-                self.rect.y -= self.speed - 3
+                if not self.check_collision(0, -self.speed):
+                    self.rect.y -= self.speed - 4
 
 
 GroupWall = pygame.sprite.Group()
@@ -481,7 +464,7 @@ crewmate3 = Crewmate("images/sprites/red_sprite.png", 800, 100, width_sprite, he
 
 GroupCrewmate.add(crewmate1, crewmate2, crewmate3)
 
-impostor = Impostor("images/sprites/white.png", 0, 0, width_sprite, height_sprite, 4)
+impostor = Impostor("images/sprites/white.png", 100, 100, width_sprite, height_sprite, 4)
 
 player = Player('images/sprites/red_sprite.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
                 width_sprite, height_sprite, 5)
@@ -512,8 +495,8 @@ def game_run():
         # crewmate1.reset()
         # crewmate1.update(player.rect)
         #
-        # impostor.reset()
-        # impostor.update(crewmate1.rect, player.rect)
+        impostor.reset()
+        impostor.update(player.rect)
         #
         # collide = pygame.sprite.spritecollide(impostor, GroupCrewmate, False, False)
         # for crewmate in collide:
