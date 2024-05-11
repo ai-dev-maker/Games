@@ -1,63 +1,78 @@
-import pygame  # Підключення основної бібліотеки
-import sys  # Для роботи із системою
-import time  # Для роботи із часом
-import math  # Для роботи із математикою
+from pygame import *  # Підключення основної бібліотеки
+from time import time as timer  # Модуль для роботи із часом
+import sys  # Модуль для роботи із системою
+import math  # Моуль для роботи із математикою
 
-pygame.init()
+mixer.init()
 
-WIDTH, HEIGHT = 800, 600
-SCENE_WIDTH = 8565
-SCENE_HEIGHT = 4794
+WIDTH, HEIGHT = 800, 600  # Розміри вікна
+SCENE_WIDTH = 8565  # Ширина сцени
+SCENE_HEIGHT = 4794  # Висота сцени
 
 SCREEN_SIZE = (WIDTH, HEIGHT)
 
-screen = pygame.display.set_mode(SCREEN_SIZE)
-pygame.display.set_caption("Among Us Clone")
+screen = display.set_mode(SCREEN_SIZE)
+display.set_caption("Among Us")
+display.set_icon(image.load('images/icon_among_us.png'))
 
-clock = pygame.time.Clock()
+clock = time.Clock()
 FPS = 60
 
 width_sprite, height_sprite = 40, 50
 
+button_sound = mixer.Sound('music/button.mp3')
+running_sound = mixer.Sound('music/running.wav')
+round_start_sound = mixer.Sound('music/round-start.mp3')
+menu_music = mixer.Sound('music/among_us_menu-1.mp3')
+win_sound = mixer.Sound('music/win.mp3')
+lose_sound = mixer.Sound('music/lose.mp3')
+
+
+"""Класс, який создає кнопки"""
+
 
 class Button:
-    def __init__(self, width, height, inactive_color, active_color, display):
+    def __init__(self, width, height, inactive_color, active_color, window):
         self.width = width
         self.height = height
         self.inactive_color = inactive_color
         self.active_color = active_color
-        self.display = display
+        self.window = window
 
-    def draw(self, display, x, y, message, action=None, font_size=35):
-        mouse = pygame.mouse.get_pos()
-        click = pygame.mouse.get_pressed()
-        if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
-            pygame.draw.rect(display, self.active_color, (x, y, self.width, self.height))
+    def draw(self, window, x, y, message, action=None, font_size=35):
+        mouse_ = mouse.get_pos()
+        click = mouse.get_pressed()
+        if x < mouse_[0] < x + self.width and y < mouse_[1] < y + self.height:
+            draw.rect(window, self.active_color, (x, y, self.width, self.height))
             if click[0] == 1:
-                # pygame.mixer.Sound.play(button_sound)
-                pygame.time.delay(100)
+                mixer.Sound.play(button_sound)
+                time.delay(100)
                 if action is not None:
                     action()
         else:
-            pygame.draw.rect(display, self.inactive_color, (x, y, self.width, self.height))
+            draw.rect(window, self.inactive_color, (x, y, self.width, self.height))
 
-        print_text(display, message=message, x=x + 10, y=y + 10, font_color=(0, 0, 0), font_size=font_size)
+        print_text(window, message=message, x=x + 10, y=y + 10, font_color=(220, 220, 220), font_size=font_size)
 
     def is_clicked(self, mouse_pos):
-        button_rect = pygame.Rect(0, 0, self.width, self.height)
+        button_rect = Rect(0, 0, self.width, self.height)
         return button_rect.collidepoint(mouse_pos)
 
 
 def print_text(window, message, x, y, font_color, font_type="font/game_font.ttf", font_size=35):
-    font_type = pygame.font.Font(font_type, font_size)
+    font.init()
+    font_type = font.Font(font_type, font_size)
     text = font_type.render(message, True, font_color)
     window.blit(text, (x, y))
 
 
-class GameSprite(pygame.sprite.Sprite):
+"""Головний клас"""
+
+
+class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__()
-        self.image = pygame.transform.scale(pygame.image.load(player_image), (player_width, player_height))
+        self.image = transform.scale(image.load(player_image), (player_width, player_height))
         self.speed = speed
         self.rect = self.image.get_rect()
         self.rect.x = player_x
@@ -68,51 +83,51 @@ class GameSprite(pygame.sprite.Sprite):
 
     def animation(self, kind):
         if kind == 'stay_right':
-            self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_sprite.png"),
-                                                    (self.width_sprite, self.height_sprite))
+            self.image = transform.scale(image.load("images/sprites/red_sprite.png"),
+                                         (self.width_sprite, self.height_sprite))
 
         elif kind == 'right':
             self.counter += 1
             if 0 <= self.counter < 20:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right0.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_right0.png"),
+                                             (self.width_sprite, self.height_sprite))
             elif 20 <= self.counter < 25:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right1.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_right1.png"),
+                                             (self.width_sprite, self.height_sprite))
             elif 25 <= self.counter < 45:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right2.png"),
-                                                        (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 50:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_right3.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_right2.png"),
+                                             (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = transform.scale(image.load("images/sprites/red_right3.png"),
+                                             (self.width_sprite, self.height_sprite))
 
-            if self.counter > 50:
+            if self.counter > 60:
                 self.counter = 0
 
         if kind == 'stay_left':
-            self.image = pygame.transform.scale(pygame.image.load("images/sprites/stay_left.png"),
-                                                    (self.width_sprite, self.height_sprite))
+            self.image = transform.scale(image.load("images/sprites/stay_left.png"),
+                                         (self.width_sprite, self.height_sprite))
         elif kind == 'left':
             self.counter += 1
             if 0 <= self.counter < 20:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left0.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_left0.png"),
+                                             (self.width_sprite, self.height_sprite))
             elif 20 <= self.counter < 25:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_left1.png"),
+                                             (self.width_sprite, self.height_sprite))
             elif 25 <= self.counter < 45:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left2.png"),
-                                                        (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 50:
-                self.image = pygame.transform.scale(pygame.image.load("images/sprites/red_left1.png"),
-                                                        (self.width_sprite, self.height_sprite))
+                self.image = transform.scale(image.load("images/sprites/red_left2.png"),
+                                             (self.width_sprite, self.height_sprite))
+            elif 45 <= self.counter < 60:
+                self.image = transform.scale(image.load("images/sprites/red_left1.png"),
+                                             (self.width_sprite, self.height_sprite))
 
-            if self.counter > 50:
+            if self.counter > 60:
                 self.counter = 0
 
         elif kind == 'dead':
-            self.image = pygame.transform.scale(pygame.image.load("images/sprites/white.png"),
-                                                (self.width_sprite, self.height_sprite))
+            self.image = transform.scale(image.load("images/sprites/white.png"),
+                                         (self.width_sprite, self.height_sprite))
 
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
@@ -139,18 +154,23 @@ class GameSprite(pygame.sprite.Sprite):
         screen.blit(self.image, self.rect)
 
 
+"""Клас для створення головного героя"""
+
+
 class Player(GameSprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__(player_image, player_x, player_y, player_width, player_height, 5)
         self.counter = 0
+        self.is_moving = False
 
     def update(self):
         global cam_x
         global cam_y
 
-        keys = pygame.key.get_pressed()
+        keys = key.get_pressed()
 
-        if keys[pygame.K_w]:
+        if keys[K_w]:
+            self.is_moving = True
             if self.rect.y < HEIGHT // 2 - height_sprite and cam_y + self.speed <= 0:
                 cam_y += self.speed
             elif self.rect.y > 10:
@@ -158,7 +178,8 @@ class Player(GameSprite):
                     self.rect.y -= self.speed
             self.animation(kind='right')
 
-        elif keys[pygame.K_s]:
+        elif keys[K_s]:
+            self.is_moving = True
             if self.rect.y > HEIGHT // 2 - height_sprite and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
                 cam_y -= self.speed
             elif self.rect.y < HEIGHT - 50:
@@ -166,7 +187,8 @@ class Player(GameSprite):
                     self.rect.y += self.speed
             self.animation(kind='left')
 
-        elif keys[pygame.K_a]:
+        elif keys[K_a]:
+            self.is_moving = True
             if self.rect.x < WIDTH // 2 and cam_x + self.speed <= 0:
                 cam_x += self.speed
             elif self.rect.x > 0:
@@ -174,7 +196,8 @@ class Player(GameSprite):
                     self.rect.x -= self.speed
             self.animation(kind='left')
 
-        elif keys[pygame.K_d]:
+        elif keys[K_d]:
+            self.is_moving = True
             if self.rect.x > WIDTH // 2 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
                 cam_x -= self.speed
             elif self.rect.x < WIDTH - 50:
@@ -184,17 +207,24 @@ class Player(GameSprite):
 
         else:
             self.animation(kind='stay_right')
+            self.is_moving = False
 
-        if keys[pygame.K_g]:
-            print(self.rect.x, self.rect.y)
+        if self.is_moving:
+            if running_sound.get_num_channels() == 0:
+                running_sound.set_volume(0.05)
+                running_sound.play()
+        else:
+            running_sound.stop()
 
 
-class Wall(pygame.sprite.Sprite):
+"""Клас для стін (текстур)"""
 
-    def __init__(self, wall_width, wall_height, wall_x, wall_y, color):
+
+class Wall(sprite.Sprite):
+    def __init__(self, wall_width, wall_height, wall_x, wall_y, back_color):
         super().__init__()
-        self.image = pygame.Surface((wall_width, wall_height))
-        self.image.fill(color)
+        self.image = Surface((wall_width, wall_height))
+        self.image.fill(back_color)
         self.rect = self.image.get_rect()
         self.rect.x = wall_x
         self.rect.y = wall_y
@@ -206,8 +236,8 @@ class Wall(pygame.sprite.Sprite):
         self.rect.x = (self.local_x + cam_x)
         self.rect.y = (self.local_y + cam_y)
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_h]:
+        keys = key.get_pressed()
+        if keys[K_h]:
             print(self.rect.x, self.rect.y)
 
         # print(self.rect)
@@ -241,10 +271,12 @@ class Crewmate(GameSprite):
                 self.rect.y -= self.speed - 3
 
 
+"""Клас для самозванця"""
+
+
 class Impostor(GameSprite):
     def __init__(self, impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, speed=0):
-        super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 5)
-        self.counter = 0
+        super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 2)
 
     def update(self, player_rect):
         different_x = player_rect.x - self.rect.x
@@ -252,23 +284,23 @@ class Impostor(GameSprite):
 
         if abs(different_x) > abs(different_y):
             if different_x > 0:
-                if not self.check_collision(0, self.speed):
-                    self.rect.x += self.speed - 4
+                if not self.check_collision(-self.speed, 0):
+                    self.rect.x += self.speed
                     self.animation(kind="right")
             else:
-                if not self.check_collision(-self.speed, 0):
-                    self.rect.x -= self.speed - 4
+                if not self.check_collision(self.speed, 0):
+                    self.rect.x -= self.speed
                     self.animation(kind="left")
         else:
             if different_y > 0:
                 if not self.check_collision(0, -self.speed):
-                    self.rect.y += self.speed - 4
+                    self.rect.y += self.speed
             else:
-                if not self.check_collision(0, -self.speed):
-                    self.rect.y -= self.speed - 4
+                if not self.check_collision(0, self.speed):
+                    self.rect.y -= self.speed
 
 
-GroupWall = pygame.sprite.Group()
+GroupWall = sprite.Group()
 
 wall1 = Wall(770, 13, 1157, 480, (255, 0, 255))
 wall2 = Wall(13, 192, 1153, 585, (255, 0, 255))
@@ -307,7 +339,6 @@ wall34 = Wall(13, 588, 1563, 1310, (255, 0, 255))
 wall35 = Wall(13, 145, 1692, 1740, (255, 0, 255))
 wall36 = Wall(145, 13, 1692, 1740, (255, 0, 255))
 wall37 = Wall(13, 185, 1910, 1475, (255, 0, 255))
-
 wall38 = Wall(50, 185, 2050, 1415, (255, 0, 255))
 wall39 = Wall(50, 120, 2100, 1385, (255, 0, 255))
 wall40 = Wall(70, 120, 2150, 1355, (255, 0, 255))
@@ -327,13 +358,11 @@ wall53 = Wall(310, 150, 2580, 1785, (255, 0, 255))
 wall54 = Wall(13, 420, 2580, 1785, (255, 0, 255))
 wall55 = Wall(940, 13, 2180, 2195, (255, 0, 255))
 wall56 = Wall(13, 30, 2020, 1995, (255, 0, 255))
-
-wall57 = Wall(230, 180, 2300, 470, (255, 0, 255))  # Main Room
+wall57 = Wall(230, 180, 2300, 470, (255, 0, 255))
 wall58 = Wall(230, 180, 2075, 230, (255, 0, 255))
 wall59 = Wall(230, 180, 2515, 215, (255, 0, 255))
 wall60 = Wall(230, 150, 2515, 720, (255, 0, 255))
 wall61 = Wall(230, 150, 2055, 720, (255, 0, 255))
-
 wall62 = Wall(360, 220, 724, 1538, (255, 0, 255))
 wall63 = Wall(13, 450, 724, 1408, (255, 0, 255))
 wall64 = Wall(150, 100, 724, 1838, (255, 0, 255))
@@ -348,8 +377,7 @@ wall72 = Wall(360, 220, 724, 450, (255, 0, 255))
 wall73 = Wall(70, 13, 719, 380, (255, 0, 255))
 wall74 = Wall(370, 13, 789, 360, (255, 0, 255))
 wall75 = Wall(13, 130, 1159, 360, (255, 0, 255))
-
-wall76 = Wall(260, 13, 1174, 1283, (255, 0, 255))  # Security
+wall76 = Wall(260, 13, 1174, 1283, (255, 0, 255))
 wall77 = Wall(13, 410, 1419, 873, (255, 0, 255))
 wall78 = Wall(100, 130, 1349, 1030, (255, 0, 255))
 wall79 = Wall(50, 13, 1369, 873, (255, 0, 255))
@@ -361,13 +389,11 @@ wall84 = Wall(20, 220, 1929, 810, (255, 0, 255))
 wall85 = Wall(20, 140, 1871, 840, (255, 0, 255))
 wall86 = Wall(20, 50, 2039, 920, (255, 0, 255))
 wall87 = Wall(20, 50, 2109, 990, (255, 0, 255))
-
-wall88 = Wall(20, 140, 1979, 1400, (255, 0, 255))  # part of electrical room
+wall88 = Wall(20, 140, 1979, 1400, (255, 0, 255))
 wall89 = Wall(20, 140, 1939, 1430, (255, 0, 255))
 wall90 = Wall(20, 70, 1889, 1670, (255, 0, 255))
 wall91 = Wall(20, 70, 1859, 1710, (255, 0, 255))
 wall92 = Wall(230, 110, 1570, 1450, (255, 0, 255))
-
 wall93 = Wall(20, 50, 2070, 960, (255, 0, 255))
 wall94 = Wall(20, 50, 2070, 30, (255, 0, 255))
 wall95 = Wall(20, 50, 2020, 90, (255, 0, 255))
@@ -456,7 +482,7 @@ GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wal
               wall142, wall143, wall144, wall145, wall146, wall147, wall148, wall149, wall150, wall151, wall152,
               wall153, wall154, wall155, wall156, wall157, wall158, wall159, wall160, wall161, wall162, wall163)
 
-GroupCrewmate = pygame.sprite.Group()
+GroupCrewmate = sprite.Group()
 
 crewmate1 = Crewmate("images/sprites/red_sprite.png", 1000, 100, width_sprite, height_sprite, 3)
 crewmate2 = Crewmate("images/sprites/red_sprite.png", 900, 100, width_sprite, height_sprite, 3)
@@ -473,124 +499,252 @@ cam_x = -player.rect.x - WIDTH // 2 - 1050
 cam_y = -player.rect.y - HEIGHT // 2 + 350
 
 
-def game_run():
-    map_image = pygame.image.load("images/map/The_Skeld_map.webp")
+"""Ігровий цикл"""
 
+
+def game_run():
+    start_time = time.get_ticks()
+    game_duration = 5
+    font_ = font.Font("font/game_font.ttf", 36)
+
+    map_image = image.load("images/map/The_Skeld_map.webp")
     scale_factor = 0.5
-    scaled_map = pygame.transform.scale(map_image,
-                                        (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
+    scaled_map = transform.scale(map_image,
+                                 (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
+
+    dark_surface = Surface((1000, 600), SRCALPHA)
+    dark_color = (0, 0, 0)
+    max_alpha = 255
+    current_alpha = 0
+
+    increasing_alpha = True
+
+    alpha_change_speed = 1
 
     running = True
+    game_timer = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in event.get():
+            if e.type == QUIT:
                 running = False
-        screen.blit(scaled_map, (cam_x, cam_y))
 
-        player.reset()
-        player.update()
+        if game_timer:
+            elapsed_time = time.get_ticks() - start_time
+            elapsed_seconds = elapsed_time // 1000
 
-        GroupWall.update()
+            GroupWall.update()
+            screen.blit(scaled_map, (cam_x, cam_y))
 
-        # crewmate1.reset()
-        # crewmate1.update(player.rect)
-        #
-        impostor.reset()
-        impostor.update(player.rect)
-        #
-        # collide = pygame.sprite.spritecollide(impostor, GroupCrewmate, False, False)
-        # for crewmate in collide:
-        #     if collide:
-        #         crewmate.speed = 0
-        #         crewmate.animation(kind='dead')
+            player.reset()
+            player.update()
 
-        pygame.display.update()
-        clock.tick(FPS)
+            impostor.reset()
+            impostor.update(player.rect)
 
-    pygame.quit()
+            timer_text = font_.render("Time: " + str(int(game_duration - elapsed_seconds)), True, (255, 255, 255))
+            screen.blit(timer_text, (10, 10))
+
+            if elapsed_seconds >= game_duration:
+                if running_sound.get_num_channels() == 0:
+                    win_sound.play()
+                if increasing_alpha:
+                    current_alpha += alpha_change_speed
+                    if current_alpha >= max_alpha:
+                        increasing_alpha = False
+
+                dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
+                screen.blit(dark_surface, (0, 0))
+
+                if not increasing_alpha:
+                    game_menu()
+                    running = False
+
+            display.update()
+            clock.tick(FPS)
+
+    quit()
     sys.exit()
 
 
+"""Ігрове меню"""
+
+
 def game_menu():
-    # pygame.mixer.init()
-    # pygame.mixer.music.load('music/among_us_impostor.mp3')
-    # pygame.mixer.music.play()
+    # menu_music.play()
+    # menu_music.set_volume(0.5)
 
-    map_image = pygame.image.load("images/map/main_menu.jpg")
-    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+    map_image = image.load("images/map/among-us-menu.jpg")
+    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    play_btn = Button(115, 50, (100, 0, 0), (150, 0, 0), screen)
-    settings_btn = Button(205, 50, (100, 0, 0), (150, 0, 0), screen)
-    quit_btn = Button(105, 50, (100, 0, 0), (150, 0, 0), screen)
+    play_btn = Button(115, 50, (0, 0, 0), (50, 0, 10), screen)
+    settings_btn = Button(205, 50, (0, 0, 0), (50, 0, 10), screen)
+    quit_btn = Button(105, 50, (0, 0, 0), (50, 0, 10), screen)
 
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in event.get():
+            if e.type == QUIT:
                 running = False
 
         screen.blit(transform_map, (0, 0))
 
-        play_btn.draw(screen, WIDTH // 2 - 57.5, HEIGHT - 535, "Play", game_run, 35)
-        settings_btn.draw(screen, WIDTH // 2 - 102.5, HEIGHT - 485, "Settings", settings, 35)
-        quit_btn.draw(screen, WIDTH // 2 - 52.5, HEIGHT - 435, "Quit", close, 35)
+        play_btn.draw(screen, WIDTH // 2 - 57.5, HEIGHT - 385, "Play", lobby, 35)
+        settings_btn.draw(screen, WIDTH // 2 - 102.5, HEIGHT - 335, "Settings", settings, 35)
+        quit_btn.draw(screen, WIDTH // 2 - 52.5, HEIGHT - 285, "Quit", close, 35)
 
-        pygame.display.flip()
+        display.update()
         clock.tick(FPS)
 
-    pygame.quit()
+    quit()
     sys.exit()
 
 
-def settings():
-    map_image = pygame.image.load("images/map/main_menu.jpg")
-    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+"""Ігрові настройки"""
 
-    back_btn = Button(115, 45, (100, 0, 0), (150, 0, 0), screen)
+
+def settings():
+    map_image = image.load("images/map/main_menu.jpg")
+    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
+
+    back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
+    how_to_play_btn = Button(290, 50, (0, 0, 0), (50, 0, 10), screen)
+    features_btn = Button(225, 50, (0, 0, 0), (50, 0, 10), screen)
 
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in event.get():
+            if e.type == QUIT:
                 running = False
 
         screen.blit(transform_map, (0, 0))
 
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
+        how_to_play_btn.draw(screen, WIDTH // 2 - 145, HEIGHT - 455, "How To Play", how_to_play, 35)
+        features_btn.draw(screen, WIDTH // 2 - 112.5, HEIGHT - 405, "Describe", describe, 35)
 
-        pygame.display.flip()
+        display.update()
         clock.tick(FPS)
 
-    pygame.quit()
+    quit()
     sys.exit()
 
 
-def lobby():
-    map_image = pygame.image.load("images/map/lobby.png")
-    transform_map = pygame.transform.scale(map_image, (WIDTH, HEIGHT))
+def how_to_play():
+    map_image = image.load("images/map/how_to_play.jpg")
+    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
+
+    back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
 
     running = True
     while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+        for e in event.get():
+            if e.type == QUIT:
                 running = False
 
         screen.blit(transform_map, (0, 0))
 
-        player.reset()
-        player.update()
+        back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
 
-        pygame.display.flip()
+        print_text(screen, """Мета:""", WIDTH // 2 - 300, HEIGHT - 500, (255, 255, 255), font_size=25)
+        print_text(screen, """Протриматися певний час від перевертня,""",
+                   WIDTH // 2 - 280, HEIGHT - 470, (255, 255, 255), font_size=15)
+        print_text(screen, """щоб він не наздогнав головного героя""",
+                   WIDTH // 2 - 280, HEIGHT - 450, (255, 255, 255), font_size=15)
+        print_text(screen, """Управління:""", WIDTH // 2 - 300, HEIGHT - 420, (255, 255, 255), font_size=25)
+        print_text(screen, """w - уверх""", WIDTH // 2 - 280, HEIGHT - 380, (255, 255, 255), font_size=15)
+        print_text(screen, """s - униз""", WIDTH // 2 - 280, HEIGHT - 360, (255, 255, 255), font_size=15)
+        print_text(screen, """d - вправо""", WIDTH // 2 - 280, HEIGHT - 340, (255, 255, 255), font_size=15)
+        print_text(screen, """a - вліво""", WIDTH // 2 - 280, HEIGHT - 320, (255, 255, 255), font_size=15)
+
+        display.update()
         clock.tick(FPS)
 
-    pygame.quit()
+    quit()
     sys.exit()
 
 
+def describe():
+    map_image = image.load("images/map/how_to_play.jpg")
+    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
+
+    back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
+
+    running = True
+    while running:
+        for e in event.get():
+            if e.type == QUIT:
+                running = False
+
+        screen.blit(transform_map, (0, 0))
+
+        back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
+
+        print_text(screen, """Я обрав гру Among Us, тому що хотів зробити її ідеальною.""", WIDTH // 2 - 100, HEIGHT // 2 - 480,
+                   (255, 255, 255), font_size=15)
+        print_text(screen, """Такою, якою я хотів би її бачити""", WIDTH // 2 - 100, HEIGHT // 2 - 460,
+                   (255, 255, 255), font_size=15)
+        print_text(screen, """Принаймні, я задоволений результатом, але хотів добавити більше механік""", WIDTH // 2 - 100,
+                   HEIGHT // 2 - 440, (255, 255, 255), font_size=15)
+
+        display.update()
+        clock.tick(FPS)
+
+    quit()
+    sys.exit()
+
+
+"""Анімаційний вхід у гру"""
+
+
+def lobby():
+    map_image = image.load("images/among_us.jpg")
+    transform_map = transform.scale(map_image, (1000, 600))
+
+    dark_surface = Surface((1000, 600), SRCALPHA)
+    dark_color = (0, 0, 0)
+    max_alpha = 250
+    current_alpha = 0
+
+    increasing_alpha = True
+
+    alpha_change_speed = 1.2
+
+    running = True
+    while running:
+        for e in event.get():
+            if e.type == QUIT:
+                running = False
+        if increasing_alpha:
+            current_alpha += alpha_change_speed
+            if current_alpha >= max_alpha:
+                increasing_alpha = False
+                game_run()
+                running = False
+
+        dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
+
+        screen.blit(transform_map, (-100, 0))
+        screen.blit(dark_surface, (0, 0))
+
+        if round_start_sound.get_num_channels() == 0:
+            round_start_sound.set_volume(0.5)
+            round_start_sound.play()
+            time.delay(100)
+
+        display.update()
+        clock.tick(FPS)
+
+    quit()
+    sys.exit()
+
+
+"""Функція, яка закриває вікно"""
+
+
 def close():
-    click = pygame.mouse.get_pressed()
+    click = mouse.get_pressed()
     if click[0] == 1:
         sys.exit()
 
 
-game_menu()
+game_menu()  # Запуск меню
