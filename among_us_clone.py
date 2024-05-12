@@ -126,29 +126,8 @@ class GameSprite(sprite.Sprite):
                 self.counter = 0
 
         elif kind == 'dead':
-            self.image = transform.scale(image.load("images/sprites/white.png"),
+            self.image = transform.scale(image.load("images/sprites/dead2.png"),
                                          (self.width_sprite, self.height_sprite))
-
-    def check_collision(self, x_shift, y_shift):
-        new_rect = self.rect.move(x_shift, y_shift)
-        for wall in GroupWall:
-            # wall.reset()
-
-            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
-            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
-
-            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
-
-            if distance <= float(0):
-                return True
-
-            if distance <= self.speed:
-                return True
-
-            if new_rect.colliderect(wall.rect):
-                return True
-
-        return False
 
     def reset(self):
         screen.blit(self.image, self.rect)
@@ -216,6 +195,27 @@ class Player(GameSprite):
         else:
             running_sound.stop()
 
+    def check_collision(self, x_shift, y_shift):
+        new_rect = self.rect.move(x_shift, y_shift)
+        for wall in GroupWall:
+            # wall.reset()
+
+            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
+            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
+
+            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
+
+            if distance <= float(0):
+                return True
+
+            if distance <= self.speed:
+                return True
+
+            if new_rect.colliderect(wall.rect):
+                return True
+
+        return False
+
 
 """Клас для стін (текстур)"""
 
@@ -277,6 +277,8 @@ class Crewmate(GameSprite):
 class Impostor(GameSprite):
     def __init__(self, impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, speed=0):
         super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 2)
+        self.local_x = impostor_x
+        self.local_y = impostor_y
 
     def update(self, player_rect):
         different_x = player_rect.x - self.rect.x
@@ -298,6 +300,50 @@ class Impostor(GameSprite):
             else:
                 if not self.check_collision(0, self.speed):
                     self.rect.y -= self.speed
+        # dx = player_rect.x - self.rect.x
+        # dy = player_rect.y - self.rect.y
+        #
+        # if abs(dx) > self.speed or abs(dy) > self.speed:
+        #     magnitude = (dx ** 2 + dy ** 2) ** 0.5
+        #     dx /= magnitude
+        #     dy /= magnitude
+        #
+        #     dx *= self.speed
+        #     dy *= self.speed
+        #
+        #     if not self.check_collision(dx, dy):
+        #         self.rect.x += dx
+        #         self.rect.y += dy
+        #
+        #         if abs(dx) > abs(dy):
+        #             if dx > 0:
+        #                 self.animation(kind="right")
+        #             else:
+        #                 self.animation(kind="left")
+
+    def check_collision(self, x_shift, y_shift):
+        new_rect = self.rect.move(x_shift, y_shift)
+        for wall in GroupWall:
+            # wall.reset()
+
+            wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
+            wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
+
+            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
+
+            if distance <= float(0):
+                return True
+
+            if distance <= self.speed:
+                return True
+
+            if new_rect.colliderect(wall.rect):
+                return True
+
+        return False
+
+    def reset(self):
+        screen.blit(self.image, self.rect)
 
 
 GroupWall = sprite.Group()
@@ -484,11 +530,11 @@ GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wal
 
 GroupCrewmate = sprite.Group()
 
-crewmate1 = Crewmate("images/sprites/red_sprite.png", 1000, 100, width_sprite, height_sprite, 3)
-crewmate2 = Crewmate("images/sprites/red_sprite.png", 900, 100, width_sprite, height_sprite, 3)
-crewmate3 = Crewmate("images/sprites/red_sprite.png", 800, 100, width_sprite, height_sprite, 3)
-
-GroupCrewmate.add(crewmate1, crewmate2, crewmate3)
+# crewmate1 = Crewmate("images/sprites/red_sprite.png", 1000, 100, width_sprite, height_sprite, 3)
+# crewmate2 = Crewmate("images/sprites/red_sprite.png", 900, 100, width_sprite, height_sprite, 3)
+# crewmate3 = Crewmate("images/sprites/red_sprite.png", 800, 100, width_sprite, height_sprite, 3)
+#
+# GroupCrewmate.add(crewmate1, crewmate2, crewmate3)
 
 impostor = Impostor("images/sprites/white.png", 100, 100, width_sprite, height_sprite, 4)
 
@@ -504,8 +550,8 @@ cam_y = -player.rect.y - HEIGHT // 2 + 350
 
 def game_run():
     start_time = time.get_ticks()
-    game_duration = 5
-    font_ = font.Font("font/game_font.ttf", 36)
+    game_duration = 1000
+    font_ = font.Font("font/game_font.ttf", 25)
 
     map_image = image.load("images/map/The_Skeld_map.webp")
     scale_factor = 0.5
@@ -544,9 +590,14 @@ def game_run():
             timer_text = font_.render("Time: " + str(int(game_duration - elapsed_seconds)), True, (255, 255, 255))
             screen.blit(timer_text, (10, 10))
 
-            if elapsed_seconds >= game_duration:
+            collide = sprite.collide_rect(player, impostor)
+            if collide:
+                player.speed = 0
+                player.animation(kind='dead')
+                impostor.speed = 0
                 if running_sound.get_num_channels() == 0:
-                    win_sound.play()
+                    lose_sound.set_volume(0.05)
+                    lose_sound.play()
                 if increasing_alpha:
                     current_alpha += alpha_change_speed
                     if current_alpha >= max_alpha:
@@ -558,6 +609,28 @@ def game_run():
                 if not increasing_alpha:
                     game_menu()
                     running = False
+                    game_timer = False
+            else:
+                if elapsed_seconds >= game_duration:
+                    player.speed = 0
+                    impostor.speed = 0
+                    player.animation(kind='stay_right')
+                    impostor.animation(kind='stay_right')
+                    if running_sound.get_num_channels() == 0:
+                        win_sound.set_volume(0.05)
+                        win_sound.play()
+                    if increasing_alpha:
+                        current_alpha += alpha_change_speed
+                        if current_alpha >= max_alpha:
+                            increasing_alpha = False
+
+                    dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
+                    screen.blit(dark_surface, (0, 0))
+
+                    if not increasing_alpha:
+                        game_menu()
+                        running = False
+                        game_timer = False
 
             display.update()
             clock.tick(FPS)
@@ -576,9 +649,9 @@ def game_menu():
     map_image = image.load("images/map/among-us-menu.jpg")
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    play_btn = Button(115, 50, (0, 0, 0), (50, 0, 10), screen)
-    settings_btn = Button(205, 50, (0, 0, 0), (50, 0, 10), screen)
-    quit_btn = Button(105, 50, (0, 0, 0), (50, 0, 10), screen)
+    play_btn = Button(150, 56, (0, 0, 0), (50, 0, 10), screen)
+    settings_btn = Button(265, 56, (0, 0, 0), (50, 0, 10), screen)
+    quit_btn = Button(135, 56, (0, 0, 0), (50, 0, 10), screen)
 
     running = True
     while running:
@@ -588,9 +661,9 @@ def game_menu():
 
         screen.blit(transform_map, (0, 0))
 
-        play_btn.draw(screen, WIDTH // 2 - 57.5, HEIGHT - 385, "Play", lobby, 35)
-        settings_btn.draw(screen, WIDTH // 2 - 102.5, HEIGHT - 335, "Settings", settings, 35)
-        quit_btn.draw(screen, WIDTH // 2 - 52.5, HEIGHT - 285, "Quit", close, 35)
+        play_btn.draw(screen, WIDTH // 2 - 75, HEIGHT - 385, "Play", lobby, 45)
+        settings_btn.draw(screen, WIDTH // 2 - 132.5, HEIGHT - 330, "Settings", settings, 45)
+        quit_btn.draw(screen, WIDTH // 2 - 67.5, HEIGHT - 275, "Quit", close, 45)
 
         display.update()
         clock.tick(FPS)
@@ -679,12 +752,12 @@ def describe():
 
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
 
-        print_text(screen, """Я обрав гру Among Us, тому що хотів зробити її ідеальною.""", WIDTH // 2 - 100, HEIGHT // 2 - 480,
-                   (255, 255, 255), font_size=15)
+        print_text(screen, """Я обрав гру Among Us, тому що хотів зробити її ідеальною.""", WIDTH // 2 - 100,
+                   HEIGHT // 2 - 480, (255, 255, 255), font_size=15)
         print_text(screen, """Такою, якою я хотів би її бачити""", WIDTH // 2 - 100, HEIGHT // 2 - 460,
                    (255, 255, 255), font_size=15)
-        print_text(screen, """Принаймні, я задоволений результатом, але хотів добавити більше механік""", WIDTH // 2 - 100,
-                   HEIGHT // 2 - 440, (255, 255, 255), font_size=15)
+        print_text(screen, """Принаймні, я задоволений результатом, але хотів добавити більше механік""",
+                   WIDTH // 2 - 100, HEIGHT // 2 - 440, (255, 255, 255), font_size=15)
 
         display.update()
         clock.tick(FPS)
@@ -727,7 +800,7 @@ def lobby():
         screen.blit(dark_surface, (0, 0))
 
         if round_start_sound.get_num_channels() == 0:
-            round_start_sound.set_volume(0.5)
+            round_start_sound.set_volume(0.1)
             round_start_sound.play()
             time.delay(100)
 
