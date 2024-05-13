@@ -325,17 +325,16 @@ class Impostor(GameSprite):
                 """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(-self.speed, 0):
                     self.rect.x += self.speed
-                    print(self.rect.x)
                     self.animation(kind="right")
                 if self.check_collision(-self.speed, 0):
-                    self.rect.y += self.speed
+                    self.rect.y -= self.speed
             else:
                 """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(self.speed, 0):
                     self.rect.x -= self.speed
                     self.animation(kind="left")
                 if self.check_collision(0, -self.speed):
-                    self.rect.y += self.speed
+                    self.rect.y -= self.speed
         else:
             if different_y > 0:
                 """Перевірка зіткнень зі стінами"""
@@ -345,8 +344,6 @@ class Impostor(GameSprite):
                 """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(0, self.speed):
                     self.rect.y -= self.speed
-                if self.check_collision(0, -self.speed):
-                    self.rect.x -= self.speed
 
         # self.rect.x = (self.local_x + cam_x + 1700)
         # self.rect.y = (self.local_y + cam_y + 380)
@@ -594,8 +591,8 @@ impostor = Impostor("images/sprites/red_sprite.png", 700, 300, width_sprite, hei
 def game_run():
     """Гра триває 2 хвилини (120 секунд)"""
     start_time = time.get_ticks()
-    game_duration = 130
-    font_ = font.Font("font/game_font.ttf", 15)
+    game_duration = 15
+    font_ = font.Font("font/game_font.ttf", 20)
 
     map_image = image.load("images/map/The_Skeld_map.webp")
     """Задаю масштаб карти"""
@@ -639,8 +636,8 @@ def game_run():
             if elapsed_seconds <= 10:
                 impostor.reset()
                 """Зображення таймера на екрані"""
-                timer_text = font_.render("Time: " + str(int(10 - elapsed_seconds)), True, (255, 255, 255))
-                screen.blit(timer_text, (10, 10))
+                timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
+                screen.blit(timer_text, (WIDTH // 2, 500))
             elif elapsed_seconds >= 10:
                 impostor.update(player.rect)
                 """Зображення таймера на екрані"""
@@ -676,7 +673,7 @@ def game_run():
                     running = False
                     game_timer = False
             else:
-                """Яцщо зіткнення не було, і 120 секунд пройшло, знову ж: анімація виграшу"""
+                """Яцщо зіткнення не було, і 60 секунд пройшло, знову ж: анімація виграшу"""
                 if elapsed_seconds >= game_duration:
                     player.speed = 0
                     impostor.speed = 0
@@ -761,7 +758,7 @@ def settings():
         """Відображення картинки і кнопки"""
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
         how_to_play_btn.draw(screen, WIDTH // 2 - 145, HEIGHT - 455, "How To Play", how_to_play, 35)
-        features_btn.draw(screen, WIDTH // 2 - 112.5, HEIGHT - 405, "Describe", describe, 35)
+        features_btn.draw(screen, WIDTH // 2 - 112.5, HEIGHT - 405, "Features", describe, 35)
 
         display.update()
         clock.tick(FPS)
