@@ -1,13 +1,13 @@
-from pygame import *  # Підключення основної бібліотеки
-from time import time as timer  # Модуль для роботи із часом
-import sys  # Модуль для роботи із системою
-import math  # Моуль для роботи із математикою
+from pygame import *  
+from time import time as timer 
+import sys  
+import math  
 
 mixer.init()
 
-WIDTH, HEIGHT = 800, 600  # Розміри вікна
-SCENE_WIDTH = 8565  # Ширина сцени
-SCENE_HEIGHT = 4794  # Висота сцени
+WIDTH, HEIGHT = 800, 600 
+SCENE_WIDTH = 8565  
+SCENE_HEIGHT = 4794 
 
 SCREEN_SIZE = (WIDTH, HEIGHT)
 
@@ -21,7 +21,6 @@ FPS = 60
 width_sprite, height_sprite = 40, 50
 
 
-"""Всі звуки, які будуть застосовуватися у грі"""
 button_sound = mixer.Sound('music/button.mp3')
 running_sound = mixer.Sound('music/running.wav')
 round_start_sound = mixer.Sound('music/round-start.mp3')
@@ -30,11 +29,7 @@ lose_sound = mixer.Sound('music/lose.mp3')
 impostor_catch = mixer.Sound('music/impostor_kill.mp3')
 
 
-"""Класс, який создає кнопки"""
-
-
 class Button:
-    """Ініціалізація класу"""
     def __init__(self, width, height, inactive_color, active_color, window):
         self.width = width
         self.height = height
@@ -42,37 +37,25 @@ class Button:
         self.active_color = active_color
         self.window = window
 
-    """Відображення кнопки"""
     def draw(self, window, x, y, message, action=None, font_size=35):
-        """Місце де було нажато кнопку і чи був click"""
         mouse_ = mouse.get_pos()
         click = mouse.get_pressed()
-        """Якщо було нажато саме по кнопці"""
         if x < mouse_[0] < x + self.width and y < mouse_[1] < y + self.height:
-            """Змінюю колір"""
             draw.rect(window, self.active_color, (x, y, self.width, self.height))
             if click[0] == 1:
-                """Програю звук"""
                 button_sound.set_volume(0.3)
                 button_sound.play()
                 time.delay(100)
-                """Якщо на кнопку записана функція"""
                 if action is not None:
                     action()
         else:
-            """В інакшому випадку, просто відмальовую кнопку"""
             draw.rect(window, self.inactive_color, (x, y, self.width, self.height))
 
-        """Друкування тексту на кнопку"""
         print_text(window, message=message, x=x + 10, y=y + 10, font_color=(220, 220, 220), font_size=font_size)
-
-    """Метод для перевірки, чи була натиснута кнопка"""
+        
     def is_clicked(self, mouse_pos):
         button_rect = Rect(0, 0, self.width, self.height)
         return button_rect.collidepoint(mouse_pos)
-
-
-"""Функція для друку тексту на екран"""
 
 
 def print_text(window, message, x, y, font_color, font_type="font/game_font.ttf", font_size=35):
@@ -86,7 +69,6 @@ def print_text(window, message, x, y, font_color, font_type="font/game_font.ttf"
 
 
 class GameSprite(sprite.Sprite):
-    """Ініціалізація класу, від якого потім будуть наслідуватися класи"""
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__()
         self.image = transform.scale(image.load(player_image), (player_width, player_height))
@@ -98,9 +80,7 @@ class GameSprite(sprite.Sprite):
         self.height_sprite = height_sprite
         self.counter = 0
 
-    """Анімація бігу"""
     def animation(self, kind):
-        """Якщо параметр був заданий як stay_right"""
         if kind == 'stay_right':
             self.image = transform.scale(image.load("images/sprites/red_sprite.png"),
                                          (self.width_sprite, self.height_sprite))
@@ -147,42 +127,29 @@ class GameSprite(sprite.Sprite):
         elif kind == 'dead':
             self.image = transform.scale(image.load("images/sprites/dead2.png"),
                                          (self.width_sprite, self.height_sprite))
-
-    """Відображення спрайту"""
     def reset(self):
         screen.blit(self.image, self.rect)
 
 
-"""Клас для створення головного героя"""
-
-
 class Player(GameSprite):
-    """Ініціалізація класа Player"""
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__(player_image, player_x, player_y, player_width, player_height, 5)
-        """Змінна для анімації"""
         self.counter = 0
-        """Змінна для перевірки, чи ходить спрайт"""
         self.is_moving = False
 
     def update(self):
-        """Глобальні змінні"""
         global cam_x
         global cam_y
 
-        """Перевірка, яка клавіша натиснута"""
         keys = key.get_pressed()
 
         if keys[K_w]:
             self.is_moving = True
-            """Якщо розміщення гравця по y більша за половину екрана, камера пересувається уверх"""
             if self.rect.y < HEIGHT // 2 - height_sprite and cam_y + self.speed <= 0:
                 cam_y += self.speed
             elif self.rect.y > 10:
-                """Якщо зіткнення із стіною немає"""
                 if not self.check_collision(0, -self.speed):
                     self.rect.y -= self.speed
-            """Анімація бігу"""
             self.animation(kind='right')
 
         elif keys[K_s]:
@@ -216,17 +183,13 @@ class Player(GameSprite):
             self.animation(kind='stay_right')
             self.is_moving = False
 
-        """Якщо змінна is_moving True"""
         if self.is_moving:
-            """Якщо ніяка мелодія не грає, то вмикати звук бігу"""
             if running_sound.get_num_channels() == 0:
                 running_sound.set_volume(0.05)
                 running_sound.play()
         else:
-            """Інакше, звук вимикається"""
             running_sound.stop()
 
-    """Перевірка на зіткнення спрайта із стіною"""
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
         for wall in GroupWall:
@@ -249,11 +212,7 @@ class Player(GameSprite):
         return False
 
 
-"""Клас для стін (текстур)"""
-
-
 class Wall(sprite.Sprite):
-    """Ініціалізація класу стін"""
     def __init__(self, wall_width, wall_height, wall_x, wall_y, back_color):
         super().__init__()
         self.image = Surface((wall_width, wall_height))
@@ -262,22 +221,16 @@ class Wall(sprite.Sprite):
         self.rect.x = wall_x
         self.rect.y = wall_y
 
-        """Змінні для розташування стін відносно головного спрайта"""
         self.local_x = wall_x
         self.local_y = wall_y
 
-    """Відображення стін для динамічної камери"""
     def update(self):
         self.rect.x = (self.local_x + cam_x)
         self.rect.y = (self.local_y + cam_y)
         screen.blit(self.image, self.rect)
 
-    """Звичайне відображення стін"""
     def reset(self):
         screen.blit(self.image, self.rect)
-
-
-"""Недороблений клас для бота"""
 
 
 class Crewmate(GameSprite):
@@ -303,33 +256,24 @@ class Crewmate(GameSprite):
                 self.rect.y -= self.speed - 3
 
 
-"""Клас для самозванця"""
-
-
 class Impostor(GameSprite):
-    """Наслідуюсь від класа GameSprite і ініціалізую змінні"""
     def __init__(self, impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, speed=0):
         super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 2)
         self.local_x = impostor_x
         self.local_y = impostor_y
-
-    """Обновляю положення спрайта ворога"""
+        
     def update(self, player_rect):
-        """Шукаю різницю між x та y"""
         different_x = player_rect.x - self.rect.x
         different_y = player_rect.y - self.rect.y
 
-        """По значенням дивлюся, куди спрайт повинен переміщаться"""
         if abs(different_x) > abs(different_y):
             if different_x > 0:
-                """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(-self.speed, 0):
                     self.rect.x += self.speed
                     self.animation(kind="right")
                 if self.check_collision(-self.speed, 0):
                     self.rect.y -= self.speed
             else:
-                """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(self.speed, 0):
                     self.rect.x -= self.speed
                     self.animation(kind="left")
@@ -337,11 +281,9 @@ class Impostor(GameSprite):
                     self.rect.y -= self.speed
         else:
             if different_y > 0:
-                """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(0, -self.speed):
                     self.rect.y += self.speed
             else:
-                """Перевірка зіткнень зі стінами"""
                 if not self.check_collision(0, self.speed):
                     self.rect.y -= self.speed
 
@@ -350,7 +292,6 @@ class Impostor(GameSprite):
 
         screen.blit(self.image, self.rect)
 
-    """Перевірка спрайта на зіткнення зі стіною, якщо True - спрайт не може йти далі, і так навпаки"""
     def check_collision(self, x_shift, y_shift):
         """Створюю 'хітбокс'"""
         new_rect = self.rect.move(x_shift, y_shift)
@@ -372,18 +313,15 @@ class Impostor(GameSprite):
                 return True
 
         return False
-
-    """Відмальовую спрайт відносно головного героя"""
+    
     def reset(self):
         self.rect.x = (self.local_x + cam_x + 1700)
         self.rect.y = (self.local_y + cam_y + 380)
         screen.blit(self.image, self.rect)
 
 
-"""Створюю группу для стін"""
 GroupWall = sprite.Group()
 
-"""Створення самих стін"""
 wall1 = Wall(770, 13, 1157, 480, (255, 0, 255))
 wall2 = Wall(13, 192, 1153, 585, (255, 0, 255))
 wall3 = Wall(447, 13, 1153, 585, (255, 0, 255))
@@ -549,7 +487,6 @@ wall162 = Wall(180, 13, 3890, 808, (255, 0, 255))
 wall163 = Wall(13, 430, 4070, 813, (255, 0, 255))
 
 
-"""Додавання стін до группи"""
 GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10, wall11, wall12, wall13,
               wall14, wall15, wall16, wall17, wall18, wall19, wall20, wall21, wall22, wall23, wall24, wall25,
               wall26, wall27, wall28, wall29, wall30, wall31, wall32, wall33, wall34, wall35, wall36, wall37,
@@ -573,34 +510,25 @@ GroupCrewmate = sprite.Group()
 #
 # GroupCrewmate.add(crewmate1, crewmate2, crewmate3)
 
-"""Створення головного спрайта"""
 player = Player('images/sprites/red_sprite.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
                 width_sprite, height_sprite, 5)
 
-"""Створення динамічної камери"""
 cam_x = -player.rect.x - WIDTH // 2 - 1050
 cam_y = -player.rect.y - HEIGHT // 2 + 350
 
-"""Створення спрайта-ворога"""
 impostor = Impostor("images/sprites/red_sprite.png", 700, 300, width_sprite, height_sprite, 4)
 
 
-"""Ігровий цикл"""
-
-
 def game_run():
-    """Гра триває 2 хвилини (120 секунд)"""
     start_time = time.get_ticks()
     game_duration = 15
     font_ = font.Font("font/game_font.ttf", 20)
 
     map_image = image.load("images/map/The_Skeld_map.webp")
-    """Задаю масштаб карти"""
     scale_factor = 0.5
     scaled_map = transform.scale(map_image,
                                  (map_image.get_width() * scale_factor, map_image.get_height() * scale_factor))
 
-    """Змінні для 'затемнення'"""
     dark_surface = Surface((1000, 600), SRCALPHA)
     dark_color = (0, 0, 0)
     max_alpha = 255
@@ -612,7 +540,6 @@ def game_run():
 
     running = True
     game_timer = True
-    """Початок ігрового циклу"""
     while running:
         for e in event.get():
             if e.type == QUIT:
@@ -622,31 +549,23 @@ def game_run():
             elapsed_time = time.get_ticks() - start_time
             elapsed_seconds = elapsed_time // 1000
 
-            """Промальовування стін"""
             GroupWall.update()
 
-            """Динамічна камера"""
             screen.blit(scaled_map, (cam_x, cam_y))
 
-            """Промальовування головного героя"""
             player.reset()
             player.update()
 
-            """Доки elapsed_seconds менше 10 - спрайт стоїть, потім він двигається за спрайтом"""
             if elapsed_seconds <= 10:
                 impostor.reset()
-                """Зображення таймера на екрані"""
                 timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
                 screen.blit(timer_text, (WIDTH // 2, 500))
             elif elapsed_seconds >= 10:
                 impostor.update(player.rect)
-                """Зображення таймера на екрані"""
                 timer_text = font_.render("Time: " + str(int(game_duration - elapsed_seconds)), True, (255, 255, 255))
                 screen.blit(timer_text, (10, 10))
 
-            """Первірка зіткнення зі спрайтами"""
             collide = sprite.collide_rect(player, impostor)
-            """Якщо зіткнення відбулося, гравець програє"""
             if collide:
                 if impostor_catch.get_num_channels() == 0:
                     impostor_catch.set_volume(0.05)
@@ -655,11 +574,9 @@ def game_run():
                 player.animation(kind='dead')
                 impostor.speed = 0
                 time.delay(20)
-                """Якщо ніяка мелодія не грає"""
                 if running_sound.get_num_channels() == 0:
                     lose_sound.set_volume(0.05)
                     lose_sound.play()
-                """Доки змінна True - відбувається затемнення"""
                 if increasing_alpha:
                     current_alpha += alpha_change_speed
                     if current_alpha >= max_alpha:
@@ -667,13 +584,11 @@ def game_run():
 
                 dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
                 screen.blit(dark_surface, (0, 0))
-                """Коли змінна False, гравець повертається у головне меню"""
                 if not increasing_alpha:
                     game_menu()
                     running = False
                     game_timer = False
             else:
-                """Яцщо зіткнення не було, і 60 секунд пройшло, знову ж: анімація виграшу"""
                 if elapsed_seconds >= game_duration:
                     player.speed = 0
                     impostor.speed = 0
@@ -700,28 +615,22 @@ def game_run():
 
     quit()
     sys.exit()
-
-
-"""Ігрове меню"""
-
+    
 
 def game_menu():
     map_image = image.load("images/map/among-us-menu.jpg")
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    """Створення кнопок"""
     play_btn = Button(150, 56, (0, 0, 0), (50, 0, 10), screen)
     settings_btn = Button(265, 56, (0, 0, 0), (50, 0, 10), screen)
     quit_btn = Button(135, 56, (0, 0, 0), (50, 0, 10), screen)
 
     running = True
-    """Ігровий цикл"""
     while running:
         for e in event.get():
             if e.type == QUIT:
                 running = False
 
-        """Відображення картинки і кнопки"""
         screen.blit(transform_map, (0, 0))
 
         play_btn.draw(screen, WIDTH // 2 - 75, HEIGHT - 385, "Play", lobby, 45)
@@ -735,14 +644,10 @@ def game_menu():
     sys.exit()
 
 
-"""Ігрові настройки"""
-
-
 def settings():
     map_image = image.load("images/map/main_menu.jpg")
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    """Створення кнопок"""
     back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
     how_to_play_btn = Button(290, 50, (0, 0, 0), (50, 0, 10), screen)
     features_btn = Button(225, 50, (0, 0, 0), (50, 0, 10), screen)
@@ -755,7 +660,6 @@ def settings():
 
         screen.blit(transform_map, (0, 0))
 
-        """Відображення картинки і кнопки"""
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
         how_to_play_btn.draw(screen, WIDTH // 2 - 145, HEIGHT - 455, "How To Play", how_to_play, 35)
         features_btn.draw(screen, WIDTH // 2 - 112.5, HEIGHT - 405, "Features", describe, 35)
@@ -771,7 +675,6 @@ def how_to_play():
     map_image = image.load("images/map/how_to_play.jpg")
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    """Створення кнопки"""
     back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
 
     running = True
@@ -780,12 +683,10 @@ def how_to_play():
             if e.type == QUIT:
                 running = False
 
-        """Відображення картинки і кнопки"""
         screen.blit(transform_map, (0, 0))
 
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
 
-        """За допомогою функції print_text() друкую текст на екрані"""
         print_text(screen, """Мета:""", WIDTH // 2 - 300, HEIGHT - 500, (255, 255, 255), font_size=25)
         print_text(screen, """Протриматися певний час від перевертня,""",
                    WIDTH // 2 - 280, HEIGHT - 470, (255, 255, 255), font_size=15)
@@ -808,7 +709,6 @@ def describe():
     map_image = image.load("images/map/how_to_play.jpg")
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
-    """Створення кнопки і стіни"""
     back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
     wall = Wall(800, 200, WIDTH // 2 - 400, HEIGHT - 420, (0, 0, 0))
 
@@ -818,16 +718,12 @@ def describe():
             if e.type == QUIT:
                 running = False
 
-        """Відображення картинки"""
         screen.blit(transform_map, (0, 0))
 
-        """Відображення кнопки"""
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
 
-        """Відображення стіни"""
         wall.reset()
 
-        """За допомогою функції print_text() друкую текст на екрані"""
         print_text(screen, """Мій бот - ворог, має не ідеальний, але не поганий ШІ""", WIDTH // 2 - 380,
                    HEIGHT - 420, (255, 255, 255), font_size=15)
         print_text(screen, """Іноді можна пройти через стіну, іноді - ні""", WIDTH // 2 - 380,
@@ -842,14 +738,10 @@ def describe():
     sys.exit()
 
 
-"""Анімаційний вхід у гру"""
-
-
 def lobby():
     map_image = image.load("images/among_us.jpg")
     transform_map = transform.scale(map_image, (1000, 600))
 
-    """Змінні для майбутнього затемнення"""
     dark_surface = Surface((1000, 600), SRCALPHA)
     dark_color = (0, 0, 0)
     max_alpha = 250
@@ -864,10 +756,8 @@ def lobby():
         for e in event.get():
             if e.type == QUIT:
                 running = False
-        """Доки змінна правдива, картинка темніє"""
         if increasing_alpha:
             current_alpha += alpha_change_speed
-            """Коли current_alpha = 255, increasing_alpha = False, і цикл преривається"""
             if current_alpha >= max_alpha:
                 increasing_alpha = False
                 game_run()
@@ -878,7 +768,6 @@ def lobby():
         screen.blit(transform_map, (-100, 0))
         screen.blit(dark_surface, (0, 0))
 
-        """Перевірка, чи ніяка мелодія не грає"""
         if round_start_sound.get_num_channels() == 0:
             round_start_sound.set_volume(0.2)
             round_start_sound.play()
@@ -891,13 +780,10 @@ def lobby():
     sys.exit()
 
 
-"""Функція, яка закриває вікно"""
-
-
 def close():
     click = mouse.get_pressed()
     if click[0] == 1:
         sys.exit()
 
 
-game_menu()  # Запуск меню
+game_menu() 
