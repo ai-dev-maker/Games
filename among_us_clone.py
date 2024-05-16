@@ -1,13 +1,13 @@
-from pygame import *  
-from time import time as timer 
-import sys  
-import math  
+from pygame import *
+from time import time as timer
+import sys
+import math
 
 mixer.init()
 
-WIDTH, HEIGHT = 800, 600 
-SCENE_WIDTH = 8565  
-SCENE_HEIGHT = 4794 
+WIDTH, HEIGHT = 800, 600
+SCENE_WIDTH = 8565
+SCENE_HEIGHT = 4794
 
 SCREEN_SIZE = (WIDTH, HEIGHT)
 
@@ -20,13 +20,12 @@ FPS = 60
 
 width_sprite, height_sprite = 40, 50
 
-
 button_sound = mixer.Sound('music/button.mp3')
 running_sound = mixer.Sound('music/running.wav')
 round_start_sound = mixer.Sound('music/round-start.mp3')
 win_sound = mixer.Sound('music/win.mp3')
 lose_sound = mixer.Sound('music/lose.mp3')
-impostor_catch = mixer.Sound('music/impostor_kill.mp3')
+impostor_kill = mixer.Sound('music/impostor_kill.mp3')
 
 
 class Button:
@@ -52,7 +51,7 @@ class Button:
             draw.rect(window, self.inactive_color, (x, y, self.width, self.height))
 
         print_text(window, message=message, x=x + 10, y=y + 10, font_color=(220, 220, 220), font_size=font_size)
-        
+
     def is_clicked(self, mouse_pos):
         button_rect = Rect(0, 0, self.width, self.height)
         return button_rect.collidepoint(mouse_pos)
@@ -127,8 +126,12 @@ class GameSprite(sprite.Sprite):
         elif kind == 'dead':
             self.image = transform.scale(image.load("images/sprites/dead2.png"),
                                          (self.width_sprite, self.height_sprite))
+
     def reset(self):
         screen.blit(self.image, self.rect)
+
+
+"""Клас для створення головного героя"""
 
 
 class Player(GameSprite):
@@ -146,7 +149,8 @@ class Player(GameSprite):
         if keys[K_w]:
             self.is_moving = True
             if self.rect.y < HEIGHT // 2 - height_sprite and cam_y + self.speed <= 0:
-                cam_y += self.speed
+                if not self.check_collision(0, -self.speed):
+                    cam_y += self.speed
             elif self.rect.y > 10:
                 if not self.check_collision(0, -self.speed):
                     self.rect.y -= self.speed
@@ -155,7 +159,8 @@ class Player(GameSprite):
         elif keys[K_s]:
             self.is_moving = True
             if self.rect.y > HEIGHT // 2 - height_sprite and cam_y - self.speed >= HEIGHT - SCENE_HEIGHT:
-                cam_y -= self.speed
+                if not self.check_collision(0, self.speed):
+                    cam_y -= self.speed
             elif self.rect.y < HEIGHT - 50:
                 if not self.check_collision(0, self.speed):
                     self.rect.y += self.speed
@@ -164,7 +169,8 @@ class Player(GameSprite):
         elif keys[K_a]:
             self.is_moving = True
             if self.rect.x < WIDTH // 2 and cam_x + self.speed <= 0:
-                cam_x += self.speed
+                if not self.check_collision(-self.speed, 0):
+                    cam_x += self.speed
             elif self.rect.x > 0:
                 if not self.check_collision(-self.speed, 0):
                     self.rect.x -= self.speed
@@ -173,7 +179,8 @@ class Player(GameSprite):
         elif keys[K_d]:
             self.is_moving = True
             if self.rect.x > WIDTH // 2 and cam_x - self.speed >= WIDTH - SCENE_WIDTH:
-                cam_x -= self.speed
+                if not self.check_collision(self.speed, 0):
+                    cam_x -= self.speed
             elif self.rect.x < WIDTH - 50:
                 if not self.check_collision(self.speed, 0):
                     self.rect.x += self.speed
@@ -198,10 +205,10 @@ class Player(GameSprite):
             wall_closest_x = min(max(new_rect.x, wall.rect.x), wall.rect.x + wall.rect.width)
             wall_closest_y = min(max(new_rect.y, wall.rect.y), wall.rect.y + wall.rect.height)
 
-            distance = math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2)
+            distance = round(math.sqrt((new_rect.x - wall_closest_x) ** 2 + (new_rect.y - wall_closest_y) ** 2), 0)
 
-            if distance <= float(0):
-                return True
+            # if distance <= float(1):
+            #    return True
 
             if distance <= self.speed:
                 return True
@@ -227,6 +234,13 @@ class Wall(sprite.Sprite):
     def update(self):
         self.rect.x = (self.local_x + cam_x)
         self.rect.y = (self.local_y + cam_y)
+
+        keys = key.get_pressed()
+        if keys[K_h]:
+            print(self.rect.x, self.rect.y)
+
+        # print(self.rect)
+
         screen.blit(self.image, self.rect)
 
     def reset(self):
@@ -261,39 +275,57 @@ class Impostor(GameSprite):
         super().__init__(impostor_image, impostor_x, impostor_y, impostor_width, impostor_height, 2)
         self.local_x = impostor_x
         self.local_y = impostor_y
-        
+
     def update(self, player_rect):
+
+        self.rect.x = (self.local_x + cam_x)
+        self.rect.y = (self.local_y + cam_y)
+
         different_x = player_rect.x - self.rect.x
         different_y = player_rect.y - self.rect.y
 
         if abs(different_x) > abs(different_y):
             if different_x > 0:
                 if not self.check_collision(-self.speed, 0):
-                    self.rect.x += self.speed
+                    self.local_x += self.speed
                     self.animation(kind="right")
                 if self.check_collision(-self.speed, 0):
-                    self.rect.y -= self.speed
+                    if different_y > 0:
+                        self.local_y += self.speed
+                    else:
+                        self.local_y -= self.speed
             else:
                 if not self.check_collision(self.speed, 0):
-                    self.rect.x -= self.speed
+                    self.local_x -= self.speed
                     self.animation(kind="left")
-                if self.check_collision(0, -self.speed):
-                    self.rect.y -= self.speed
+                if self.check_collision(self.speed, 0):
+                    if different_y > 0:
+                        self.local_y += self.speed
+                    else:
+                        self.local_y -= self.speed
         else:
             if different_y > 0:
                 if not self.check_collision(0, -self.speed):
-                    self.rect.y += self.speed
+                    self.local_y += self.speed
+                if self.check_collision(0, -self.speed):
+                    if different_x > 0:
+                        self.local_x += self.speed
+                        self.animation(kind="right")
+                    else:
+                        self.local_x -= self.speed
+                        self.animation(kind="left")
             else:
                 if not self.check_collision(0, self.speed):
-                    self.rect.y -= self.speed
-
-        # self.rect.x = (self.local_x + cam_x + 1700)
-        # self.rect.y = (self.local_y + cam_y + 380)
-
-        screen.blit(self.image, self.rect)
+                    self.local_y -= self.speed
+                if self.check_collision(0, self.speed):
+                    if different_x > 0:
+                        self.local_x += self.speed
+                        self.animation(kind="right")
+                    else:
+                        self.local_x -= self.speed
+                        self.animation(kind="left")
 
     def check_collision(self, x_shift, y_shift):
-        """Створюю 'хітбокс'"""
         new_rect = self.rect.move(x_shift, y_shift)
         for wall in GroupWall:
             # wall.reset()
@@ -313,10 +345,8 @@ class Impostor(GameSprite):
                 return True
 
         return False
-    
+
     def reset(self):
-        self.rect.x = (self.local_x + cam_x + 1700)
-        self.rect.y = (self.local_y + cam_y + 380)
         screen.blit(self.image, self.rect)
 
 
@@ -378,7 +408,7 @@ wall53 = Wall(310, 150, 2580, 1785, (255, 0, 255))
 wall54 = Wall(13, 420, 2580, 1785, (255, 0, 255))
 wall55 = Wall(940, 13, 2180, 2195, (255, 0, 255))
 wall56 = Wall(13, 30, 2020, 1995, (255, 0, 255))
-wall57 = Wall(185, 140, 2320, 480, (255, 0, 255))
+wall57 = Wall(230, 180, 2300, 470, (255, 0, 255))
 wall58 = Wall(230, 180, 2075, 230, (255, 0, 255))
 wall59 = Wall(230, 180, 2515, 215, (255, 0, 255))
 wall60 = Wall(230, 150, 2515, 720, (255, 0, 255))
@@ -391,7 +421,7 @@ wall66 = Wall(140, 170, 624, 763, (255, 0, 255))
 wall67 = Wall(13, 400, 719, 370, (255, 0, 255))
 wall68 = Wall(210, 13, 428, 763, (255, 0, 255))
 wall69 = Wall(13, 660, 428, 763, (255, 0, 255))
-wall70 = Wall(200, 13, 428, 1403, (255, 0, 0))
+wall70 = Wall(200, 13, 428, 1403, (255, 0, 255))
 wall71 = Wall(100, 260, 428, 920, (255, 0, 255))
 wall72 = Wall(360, 220, 724, 450, (255, 0, 255))
 wall73 = Wall(70, 13, 719, 380, (255, 0, 255))
@@ -486,7 +516,6 @@ wall161 = Wall(180, 13, 3890, 1226, (255, 0, 255))
 wall162 = Wall(180, 13, 3890, 808, (255, 0, 255))
 wall163 = Wall(13, 430, 4070, 813, (255, 0, 255))
 
-
 GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wall10, wall11, wall12, wall13,
               wall14, wall15, wall16, wall17, wall18, wall19, wall20, wall21, wall22, wall23, wall24, wall25,
               wall26, wall27, wall28, wall29, wall30, wall31, wall32, wall33, wall34, wall35, wall36, wall37,
@@ -510,18 +539,20 @@ GroupCrewmate = sprite.Group()
 #
 # GroupCrewmate.add(crewmate1, crewmate2, crewmate3)
 
+impostor = Impostor("images/sprites/white.png", 2550, 500, width_sprite, height_sprite, 0)
+
 player = Player('images/sprites/red_sprite.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
                 width_sprite, height_sprite, 5)
 
 cam_x = -player.rect.x - WIDTH // 2 - 1050
 cam_y = -player.rect.y - HEIGHT // 2 + 350
 
-impostor = Impostor("images/sprites/red_sprite.png", 700, 300, width_sprite, height_sprite, 4)
+"""Ігровий цикл"""
 
 
 def game_run():
     start_time = time.get_ticks()
-    game_duration = 15
+    game_duration = 70
     font_ = font.Font("font/game_font.ttf", 20)
 
     map_image = image.load("images/map/The_Skeld_map.webp")
@@ -546,57 +577,45 @@ def game_run():
                 running = False
 
         if game_timer:
+            screen.blit(scaled_map, (cam_x, cam_y))
             elapsed_time = time.get_ticks() - start_time
             elapsed_seconds = elapsed_time // 1000
 
             GroupWall.update()
-
-            screen.blit(scaled_map, (cam_x, cam_y))
+            GroupWall.draw(screen)
 
             player.reset()
             player.update()
 
             if elapsed_seconds <= 10:
                 impostor.reset()
-                timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
-                screen.blit(timer_text, (WIDTH // 2, 500))
-            elif elapsed_seconds >= 10:
                 impostor.update(player.rect)
+                impostor.speed = 0
+                impostor.animation(kind='stay_right')
+
+                timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
+                screen.blit(timer_text, (WIDTH // 2, HEIGHT - 100))
+            elif elapsed_seconds >= 10:
+                impostor.reset()
+                impostor.update(player.rect)
+                impostor.speed = 4
+
                 timer_text = font_.render("Time: " + str(int(game_duration - elapsed_seconds)), True, (255, 255, 255))
                 screen.blit(timer_text, (10, 10))
 
-            collide = sprite.collide_rect(player, impostor)
-            if collide:
-                if impostor_catch.get_num_channels() == 0:
-                    impostor_catch.set_volume(0.05)
-                    impostor_catch.play()
-                player.speed = 0
-                player.animation(kind='dead')
-                impostor.speed = 0
-                time.delay(20)
-                if running_sound.get_num_channels() == 0:
-                    lose_sound.set_volume(0.05)
-                    lose_sound.play()
-                if increasing_alpha:
-                    current_alpha += alpha_change_speed
-                    if current_alpha >= max_alpha:
-                        increasing_alpha = False
-
-                dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
-                screen.blit(dark_surface, (0, 0))
-                if not increasing_alpha:
-                    game_menu()
-                    running = False
-                    game_timer = False
-            else:
-                if elapsed_seconds >= game_duration:
+                collide = sprite.collide_rect(player, impostor)
+                if collide:
+                    if impostor_kill.get_num_channels() == 0:
+                        impostor_kill.set_volume(0.05)
+                        impostor_kill.play()
                     player.speed = 0
+                    player.animation(kind='dead')
                     impostor.speed = 0
-                    player.animation(kind='stay_right')
                     impostor.animation(kind='stay_right')
+                    time.delay(10)
                     if running_sound.get_num_channels() == 0:
-                        win_sound.set_volume(0.05)
-                        win_sound.play()
+                        lose_sound.set_volume(0.1)
+                        lose_sound.play()
                     if increasing_alpha:
                         current_alpha += alpha_change_speed
                         if current_alpha >= max_alpha:
@@ -609,13 +628,34 @@ def game_run():
                         game_menu()
                         running = False
                         game_timer = False
+                else:
+                    if elapsed_seconds >= game_duration:
+                        player.speed = 0
+                        impostor.speed = 0
+                        player.animation(kind='stay_right')
+                        impostor.animation(kind='stay_right')
+                        if running_sound.get_num_channels() == 0:
+                            win_sound.set_volume(0.05)
+                            win_sound.play()
+                        if increasing_alpha:
+                            current_alpha += alpha_change_speed
+                            if current_alpha >= max_alpha:
+                                increasing_alpha = False
+
+                        dark_surface.fill((dark_color[0], dark_color[1], dark_color[2], current_alpha))
+                        screen.blit(dark_surface, (0, 0))
+
+                        if not increasing_alpha:
+                            game_menu()
+                            running = False
+                            game_timer = False
 
             display.update()
             clock.tick(FPS)
 
     quit()
     sys.exit()
-    
+
 
 def game_menu():
     map_image = image.load("images/map/among-us-menu.jpg")
@@ -649,8 +689,6 @@ def settings():
     transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
 
     back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
-    how_to_play_btn = Button(290, 50, (0, 0, 0), (50, 0, 10), screen)
-    features_btn = Button(225, 50, (0, 0, 0), (50, 0, 10), screen)
 
     running = True
     while running:
@@ -661,75 +699,6 @@ def settings():
         screen.blit(transform_map, (0, 0))
 
         back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", game_menu, 30)
-        how_to_play_btn.draw(screen, WIDTH // 2 - 145, HEIGHT - 455, "How To Play", how_to_play, 35)
-        features_btn.draw(screen, WIDTH // 2 - 112.5, HEIGHT - 405, "Features", describe, 35)
-
-        display.update()
-        clock.tick(FPS)
-
-    quit()
-    sys.exit()
-
-
-def how_to_play():
-    map_image = image.load("images/map/how_to_play.jpg")
-    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
-
-    back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
-
-    running = True
-    while running:
-        for e in event.get():
-            if e.type == QUIT:
-                running = False
-
-        screen.blit(transform_map, (0, 0))
-
-        back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
-
-        print_text(screen, """Мета:""", WIDTH // 2 - 300, HEIGHT - 500, (255, 255, 255), font_size=25)
-        print_text(screen, """Протриматися певний час від перевертня,""",
-                   WIDTH // 2 - 280, HEIGHT - 470, (255, 255, 255), font_size=15)
-        print_text(screen, """щоб він не наздогнав головного героя""",
-                   WIDTH // 2 - 280, HEIGHT - 450, (255, 255, 255), font_size=15)
-        print_text(screen, """Управління:""", WIDTH // 2 - 300, HEIGHT - 420, (255, 255, 255), font_size=25)
-        print_text(screen, """w - уверх""", WIDTH // 2 - 280, HEIGHT - 380, (255, 255, 255), font_size=15)
-        print_text(screen, """s - униз""", WIDTH // 2 - 280, HEIGHT - 360, (255, 255, 255), font_size=15)
-        print_text(screen, """d - вправо""", WIDTH // 2 - 280, HEIGHT - 340, (255, 255, 255), font_size=15)
-        print_text(screen, """a - вліво""", WIDTH // 2 - 280, HEIGHT - 320, (255, 255, 255), font_size=15)
-
-        display.update()
-        clock.tick(FPS)
-
-    quit()
-    sys.exit()
-
-
-def describe():
-    map_image = image.load("images/map/how_to_play.jpg")
-    transform_map = transform.scale(map_image, (WIDTH, HEIGHT))
-
-    back_btn = Button(115, 45, (0, 0, 0), (50, 0, 0), screen)
-    wall = Wall(800, 200, WIDTH // 2 - 400, HEIGHT - 420, (0, 0, 0))
-
-    running = True
-    while running:
-        for e in event.get():
-            if e.type == QUIT:
-                running = False
-
-        screen.blit(transform_map, (0, 0))
-
-        back_btn.draw(screen, WIDTH // 2 - 370, HEIGHT - 570, "Back", settings, 30)
-
-        wall.reset()
-
-        print_text(screen, """Мій бот - ворог, має не ідеальний, але не поганий ШІ""", WIDTH // 2 - 380,
-                   HEIGHT - 420, (255, 255, 255), font_size=15)
-        print_text(screen, """Іноді можна пройти через стіну, іноді - ні""", WIDTH // 2 - 380,
-                   HEIGHT - 380, (255, 255, 255), font_size=15)
-        print_text(screen, """Бот передвигається швидше, коли головний герой біжить""", WIDTH // 2 - 380,
-                   HEIGHT - 340, (255, 255, 255), font_size=15)
 
         display.update()
         clock.tick(FPS)
@@ -769,7 +738,7 @@ def lobby():
         screen.blit(dark_surface, (0, 0))
 
         if round_start_sound.get_num_channels() == 0:
-            round_start_sound.set_volume(0.2)
+            round_start_sound.set_volume(0.3)
             round_start_sound.play()
             time.delay(100)
 
@@ -786,4 +755,4 @@ def close():
         sys.exit()
 
 
-game_menu() 
+game_menu()
