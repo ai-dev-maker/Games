@@ -2,6 +2,7 @@ from pygame import *
 from time import time as timer
 import sys
 import math
+import random
 
 mixer.init()
 
@@ -26,6 +27,7 @@ round_start_sound = mixer.Sound('music/round-start.mp3')
 win_sound = mixer.Sound('music/win.mp3')
 lose_sound = mixer.Sound('music/lose.mp3')
 impostor_kill = mixer.Sound('music/impostor_kill.mp3')
+impostor_kill_2 = mixer.Sound('music/impostor_kill-2.mp3')
 
 
 class Button:
@@ -75,8 +77,8 @@ class GameSprite(sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = player_x
         self.rect.y = player_y
-        self.width_sprite = width_sprite
-        self.height_sprite = height_sprite
+        self.width_sprite = player_width
+        self.height_sprite = player_height
         self.counter = 0
 
     def reset(self):
@@ -261,102 +263,98 @@ class Crewmate(sprite.Sprite):
         self.bot_color = bot_color
         self.local_x = bot_x
         self.local_y = bot_y
+        self.state = 'alive'
+        self.direction = random.choice(['up', 'down', 'left', 'right'])
+        self.change_direction_time = time.get_ticks()
 
-    def update(self, player_rect):
-        self.rect.x = (self.local_x + cam_x)
-        self.rect.y = (self.local_y + cam_y)
+    def update(self):
+        if self.state == 'dead':
+            self.speed = 0
+            self.rect.x = (self.local_x + cam_x)
+            self.rect.y = (self.local_y + cam_y)
+        else:
+            self.rect.x = (self.local_x + cam_x)
+            self.rect.y = (self.local_y + cam_y)
+            
+            current_time = time.get_ticks()
 
-        different_x = player_rect.x - self.rect.x
-        different_y = player_rect.y - self.rect.y
+            if current_time - self.change_direction_time > random.randint(1000, 3000):
+                self.direction = random.choice(['up', 'down', 'left', 'right'])
+                self.change_direction_time = current_time
 
-        if abs(different_x) > abs(different_y):
-            if different_x > 0:
+            if self.direction == 'up':
+                if not self.check_collision(0, -self.speed):
+                    self.local_y -= self.speed
+                    self.animation(kind="up")
+                else:
+                    self.direction = random.choice(['down', 'left', 'right'])
+            elif self.direction == 'down':
+                if not self.check_collision(0, self.speed):
+                    self.local_y += self.speed
+                    self.animation(kind="down")
+                else:
+                    self.direction = random.choice(['up', 'left', 'right'])
+            elif self.direction == 'left':
                 if not self.check_collision(-self.speed, 0):
-                    self.local_x += self.speed
-                    self.animation(kind="right")
-                if self.check_collision(-self.speed, 0):
-                    if different_y > 0:
-                        self.local_y += self.speed
-                    else:
-                        self.local_y -= self.speed
-            else:
-                if not self.check_collision(self.speed, 0):
                     self.local_x -= self.speed
                     self.animation(kind="left")
-                if self.check_collision(self.speed, 0):
-                    if different_y > 0:
-                        self.local_y += self.speed
-                    else:
-                        self.local_y -= self.speed
-        else:
-            if different_y > 0:
-                if not self.check_collision(0, -self.speed):
-                    self.local_y += self.speed
-                if self.check_collision(0, -self.speed):
-                    if different_x > 0:
-                        self.local_x += self.speed
-                        self.animation(kind="right")
-                    else:
-                        self.local_x -= self.speed
-                        self.animation(kind="left")
-            else:
-                if not self.check_collision(0, self.speed):
-                    self.local_y -= self.speed
-                if self.check_collision(0, self.speed):
-                    if different_x > 0:
-                        self.local_x += self.speed
-                        self.animation(kind="right")
-                    else:
-                        self.local_x -= self.speed
-                        self.animation(kind="left")
+                else:
+                    self.direction = random.choice(['up', 'down', 'right'])
+            elif self.direction == 'right':
+                if not self.check_collision(self.speed, 0):
+                    self.local_x += self.speed
+                    self.animation(kind="right")
+                else:
+                    self.direction = random.choice(['up', 'down', 'left'])
 
     def animation(self, kind):
-        if kind == 'stay_right':
-            self.image = transform.scale(image.load("images/" + self.bot_color + "/stay.png"),
-                                         (self.width_sprite, self.height_sprite))
-
-        elif kind == 'right':
-            self.counter += 1
-            if 0 <= self.counter < 20:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/right0.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 20 <= self.counter < 25:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/right1.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 25 <= self.counter < 45:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/right2.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 60:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/right3.png"),
-                                             (self.width_sprite, self.height_sprite))
-
-            if self.counter > 60:
-                self.counter = 0
-
-        if kind == 'stay_left':
-            self.image = transform.scale(image.load("images/" + self.bot_color + "/left0.png"),
-                                         (self.width_sprite, self.height_sprite))
-        elif kind == 'left':
-            self.counter += 1
-            if 0 <= self.counter < 20:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/left0.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 20 <= self.counter < 25:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/left1.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 25 <= self.counter < 45:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/left2.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 60:
-                self.image = transform.scale(image.load("images/" + self.bot_color + "/left1.png"),
-                                             (self.width_sprite, self.height_sprite))
-
-            if self.counter > 60:
-                self.counter = 0
-
-        elif kind == 'dead':
+        if kind == 'dead':
             self.image = transform.scale(image.load("images/" + self.bot_color + "/dead2.png"),
                                          (self.width_sprite, self.height_sprite))
+            self.state = 'dead'
+        else:
+            if kind == 'stay_right':
+                self.image = transform.scale(image.load("images/" + self.bot_color + "/stay.png"),
+                                             (self.width_sprite, self.height_sprite))
+
+            elif kind == 'right':
+                self.counter += 1
+                if 0 <= self.counter < 20:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/right0.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 20 <= self.counter < 25:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/right1.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 25 <= self.counter < 45:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/right2.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 45 <= self.counter < 60:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/right3.png"),
+                                                 (self.width_sprite, self.height_sprite))
+
+                if self.counter > 60:
+                    self.counter = 0
+
+            if kind == 'stay_left':
+                self.image = transform.scale(image.load("images/" + self.bot_color + "/left0.png"),
+                                             (self.width_sprite, self.height_sprite))
+            elif kind == 'left':
+                self.counter += 1
+                if 0 <= self.counter < 20:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/left0.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 20 <= self.counter < 25:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/left1.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 25 <= self.counter < 45:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/left2.png"),
+                                                 (self.width_sprite, self.height_sprite))
+                elif 45 <= self.counter < 60:
+                    self.image = transform.scale(image.load("images/" + self.bot_color + "/left1.png"),
+                                                 (self.width_sprite, self.height_sprite))
+
+                if self.counter > 60:
+                    self.counter = 0
 
     def check_collision(self, x_shift, y_shift):
         new_rect = self.rect.move(x_shift, y_shift)
@@ -404,8 +402,10 @@ class Impostor(GameSprite):
                 if self.check_collision(-self.speed, 0):
                     if different_y > 0:
                         self.local_y += self.speed
+                        self.animation(kind="right")
                     else:
                         self.local_y -= self.speed
+                        self.animation(kind="left")
             else:
                 if not self.check_collision(self.speed, 0):
                     self.local_x -= self.speed
@@ -419,6 +419,7 @@ class Impostor(GameSprite):
             if different_y > 0:
                 if not self.check_collision(0, -self.speed):
                     self.local_y += self.speed
+                    self.animation(kind="right")
                 if self.check_collision(0, -self.speed):
                     if different_x > 0:
                         self.local_x += self.speed
@@ -429,6 +430,7 @@ class Impostor(GameSprite):
             else:
                 if not self.check_collision(0, self.speed):
                     self.local_y -= self.speed
+                    self.animation(kind="left")
                 if self.check_collision(0, self.speed):
                     if different_x > 0:
                         self.local_x += self.speed
@@ -458,94 +460,141 @@ class Impostor(GameSprite):
 
         return False
 
+    # def animation(self, kind):
+    #     if kind == 'stay_right':
+    #         self.image = transform.scale(image.load("images/seeker/stay.png"),
+    #                                      (self.width_sprite, self.height_sprite))
+    #
+    #     elif kind == 'right':
+    #         self.counter += 1
+    #         if 0 <= self.counter < 5:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-1.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 5 <= self.counter < 10:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-2.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 10 <= self.counter < 15:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-3.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 15 <= self.counter < 20:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-4.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 20 <= self.counter < 25:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-5.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 25 <= self.counter < 30:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-12.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 30 <= self.counter < 35:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-6.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 35 <= self.counter < 40:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-7.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 40 <= self.counter < 45:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-8.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 45 <= self.counter < 50:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-9.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 50 <= self.counter < 55:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-10.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 55 <= self.counter < 60:
+    #             self.image = transform.scale(image.load("images/seeker/Seeker_run-11.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #
+    #         if self.counter > 60:
+    #             self.counter = 0
+    #
+    #     elif kind == 'left':
+    #         self.counter += 1
+    #         if 0 <= self.counter < 5:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-1.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 5 <= self.counter < 10:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-2.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 10 <= self.counter < 15:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-3.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 15 <= self.counter < 20:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-4.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 20 <= self.counter < 25:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-5.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 25 <= self.counter < 30:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-12.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 30 <= self.counter < 35:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-6.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 35 <= self.counter < 40:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-7.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 40 <= self.counter < 45:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-8.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 45 <= self.counter < 50:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-9.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 50 <= self.counter < 55:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-10.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #         elif 55 <= self.counter < 60:
+    #             self.image = transform.scale(image.load("images/seeker/left/seeker_run-11.png"),
+    #                                          (self.width_sprite, self.height_sprite))
+    #
+    #         if self.counter > 60:
+    #             self.counter = 0
     def animation(self, kind):
         if kind == 'stay_right':
-            self.image = transform.scale(image.load("images/seeker/Seeker_run-12.png"),
+            self.image = transform.scale(image.load("images/red/stay.png"),
                                          (self.width_sprite, self.height_sprite))
 
         elif kind == 'right':
             self.counter += 1
-            if 0 <= self.counter < 5:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-1.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 5 <= self.counter < 10:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-2.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 10 <= self.counter < 15:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-3.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 15 <= self.counter < 20:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-4.png"),
+            if 0 <= self.counter < 20:
+                self.image = transform.scale(image.load("images/red/right0.png"),
                                              (self.width_sprite, self.height_sprite))
             elif 20 <= self.counter < 25:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-5.png"),
+                self.image = transform.scale(image.load("images/red/right1.png"),
                                              (self.width_sprite, self.height_sprite))
-            elif 25 <= self.counter < 30:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-12.png"),
+            elif 25 <= self.counter < 45:
+                self.image = transform.scale(image.load("images/red/right2.png"),
                                              (self.width_sprite, self.height_sprite))
-            elif 30 <= self.counter < 35:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-6.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 35 <= self.counter < 40:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-7.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 40 <= self.counter < 45:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-8.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 50:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-9.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 50 <= self.counter < 55:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-10.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 55 <= self.counter < 60:
-                self.image = transform.scale(image.load("images/seeker/Seeker_run-11.png"),
+            elif 45 <= self.counter < 60:
+                self.image = transform.scale(image.load("images/red/right3.png"),
                                              (self.width_sprite, self.height_sprite))
 
             if self.counter > 60:
                 self.counter = 0
 
+        if kind == 'stay_left':
+            self.image = transform.scale(image.load("images/red/left0.png"),
+                                         (self.width_sprite, self.height_sprite))
         elif kind == 'left':
             self.counter += 1
-            if 0 <= self.counter < 5:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-1.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 5 <= self.counter < 10:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-2.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 10 <= self.counter < 15:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-3.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 15 <= self.counter < 20:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-4.png"),
+            if 0 <= self.counter < 20:
+                self.image = transform.scale(image.load("images/red/left0.png"),
                                              (self.width_sprite, self.height_sprite))
             elif 20 <= self.counter < 25:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-5.png"),
+                self.image = transform.scale(image.load("images/red/left1.png"),
                                              (self.width_sprite, self.height_sprite))
-            elif 25 <= self.counter < 30:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-12.png"),
+            elif 25 <= self.counter < 45:
+                self.image = transform.scale(image.load("images/red/left2.png"),
                                              (self.width_sprite, self.height_sprite))
-            elif 30 <= self.counter < 35:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-6.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 35 <= self.counter < 40:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-7.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 40 <= self.counter < 45:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-8.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 45 <= self.counter < 50:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-9.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 50 <= self.counter < 55:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-10.png"),
-                                             (self.width_sprite, self.height_sprite))
-            elif 55 <= self.counter < 60:
-                self.image = transform.scale(image.load("images/seeker/left/seeker_run-11.png"),
+            elif 45 <= self.counter < 60:
+                self.image = transform.scale(image.load("images/red/left1.png"),
                                              (self.width_sprite, self.height_sprite))
 
             if self.counter > 60:
                 self.counter = 0
+
+        elif kind == 'dead':
+            self.image = transform.scale(image.load("images/red/dead2.png"),
+                                         (self.width_sprite, self.height_sprite))
 
     def reset(self):
         screen.blit(self.image, self.rect)
@@ -732,13 +781,12 @@ GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wal
               wall142, wall143, wall144, wall145, wall146, wall147, wall148, wall149, wall150, wall151, wall152,
               wall153, wall154, wall155, wall156, wall157, wall158, wall159, wall160, wall161, wall162, wall163)
 
+
 crewmate1 = Crewmate("images/blue/stay.png", 2530, 600, width_sprite, height_sprite, 'blue', 3)
 crewmate2 = Crewmate("images/green/stay.png", 2400, 650, width_sprite, height_sprite, 'green', 3)
 crewmate3 = Crewmate("images/blue/stay.png", 2400, 400, width_sprite, height_sprite, 'blue', 3)
 
-crewmates = [crewmate1, crewmate2, crewmate3]
-
-impostor = Impostor("images/seeker/Seeker_run-12.png", 2550, 500, width_sprite, height_sprite, 0)
+impostor = Impostor("images/red/stay.png", 2550, 500, width_sprite, height_sprite, 0)
 
 player = Player('images/red/stay.png', WIDTH // 2, HEIGHT // 2 - height_sprite,
                 width_sprite, height_sprite, 5)
@@ -772,47 +820,54 @@ def game_run():
         for e in event.get():
             if e.type == QUIT:
                 running = False
+            if e.type == KEYDOWN:
+                if e.key == K_ESCAPE:
+                    game_menu()
+                    game_timer = False
+                    running = False
 
         if game_timer:
+            GroupWall.update()
+            GroupWall.draw(screen)
+
             screen.blit(scaled_map, (cam_x, cam_y))
             elapsed_time = time.get_ticks() - start_time
             elapsed_seconds = elapsed_time // 1000
 
-            GroupWall.update()
-            GroupWall.draw(screen)
-
             player.reset()
             player.update()
 
+            crewmate1.reset()
+            crewmate1.update()
+            crewmate2.reset()
+            crewmate2.update()
+            crewmate3.reset()
+            crewmate3.update()
+
+            all_crewmates = [crewmate1, crewmate2, crewmate3, player]
+
             if elapsed_seconds <= 10:
+                timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
+                screen.blit(timer_text, (WIDTH // 2, HEIGHT - 100))
+
                 impostor.reset()
                 impostor.update(player.rect)
                 impostor.speed = 0
                 impostor.animation(kind='stay_right')
-
-                # for crewmate in crewmates:
-                #     crewmate.reset()
-                #     crewmate.update(player.rect)
-                #     crewmate.speed = 0
-                #     crewmate.animation(kind='stay_right')
-
-                timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
-                screen.blit(timer_text, (WIDTH // 2, HEIGHT - 100))
             elif elapsed_seconds >= 10:
-                impostor.reset()
-                impostor.update(player.rect)
-                impostor.speed = 5
-
                 timer_text = font_.render("Time: " + str(int(game_duration - elapsed_seconds)), True, (255, 255, 255))
                 screen.blit(timer_text, (10, 10))
 
-                # for crewmate in crewmates:
-                #     crewmate.reset()
-                #     crewmate.update(player.rect)
-                #     crewmate.speed = 3
+                impostor.reset()
+                impostor.update(player.rect)
+                impostor.speed = 3
 
-                collide = sprite.collide_rect(player, impostor)
-                if collide:
+                collide_crewmate_1 = sprite.collide_rect(crewmate1, impostor)
+                collide_crewmate_2 = sprite.collide_rect(crewmate2, impostor)
+                collide_crewmate_3 = sprite.collide_rect(crewmate3, impostor)
+                collide_player = sprite.collide_rect(player, impostor)
+
+                if collide_player:
                     if impostor_kill.get_num_channels() == 0:
                         impostor_kill.set_volume(0.05)
                         impostor_kill.play()
@@ -820,7 +875,8 @@ def game_run():
                     player.animation(kind='dead')
                     impostor.speed = 0
                     impostor.animation(kind='stay_right')
-                    time.delay(10)
+                    all_crewmates.remove(player)
+
                     if running_sound.get_num_channels() == 0:
                         lose_sound.set_volume(0.1)
                         lose_sound.play()
@@ -836,6 +892,24 @@ def game_run():
                         game_menu()
                         running = False
                         game_timer = False
+                elif collide_crewmate_1:
+                    if impostor_kill_2.get_num_channels() == 0:
+                        impostor_kill_2.set_volume(0.05)
+                        impostor_kill_2.play()
+                    crewmate1.animation(kind='dead')
+                    all_crewmates.remove(crewmate1)
+                elif collide_crewmate_2:
+                    if impostor_kill_2.get_num_channels() == 0:
+                        impostor_kill_2.set_volume(0.05)
+                        impostor_kill_2.play()
+                    crewmate2.animation(kind='dead')
+                    all_crewmates.remove(crewmate2)
+                elif collide_crewmate_3:
+                    if impostor_kill_2.get_num_channels() == 0:
+                        impostor_kill_2.set_volume(0.05)
+                        impostor_kill_2.play()
+                    crewmate3.animation(kind='dead')
+                    all_crewmates.remove(crewmate3)
                 else:
                     if elapsed_seconds >= game_duration:
                         player.speed = 0
