@@ -66,9 +66,6 @@ def print_text(window, message, x, y, font_color, font_type="font/game_font.ttf"
     window.blit(text, (x, y))
 
 
-"""Головний клас"""
-
-
 class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__()
@@ -83,9 +80,6 @@ class GameSprite(sprite.Sprite):
 
     def reset(self):
         screen.blit(self.image, self.rect)
-
-
-"""Клас для створення головного героя"""
 
 
 class Player(GameSprite):
@@ -264,10 +258,8 @@ class Crewmate(sprite.Sprite):
         self.local_x = bot_x
         self.local_y = bot_y
         self.state = 'alive'
-        self.direction = random.choice(['up', 'down', 'left', 'right'])
-        self.change_direction_time = time.get_ticks()
 
-    def update(self):
+    def update(self, player_rect):
         if self.state == 'dead':
             self.speed = 0
             self.rect.x = (self.local_x + cam_x)
@@ -275,37 +267,57 @@ class Crewmate(sprite.Sprite):
         else:
             self.rect.x = (self.local_x + cam_x)
             self.rect.y = (self.local_y + cam_y)
-            
-            current_time = time.get_ticks()
 
-            if current_time - self.change_direction_time > random.randint(1000, 3000):
-                self.direction = random.choice(['up', 'down', 'left', 'right'])
-                self.change_direction_time = current_time
+            different_x = player_rect.x - self.rect.x
+            different_y = player_rect.y - self.rect.y
 
-            if self.direction == 'up':
-                if not self.check_collision(0, -self.speed):
-                    self.local_y -= self.speed
-                    self.animation(kind="up")
+            distance = (different_x ** 2 + different_y ** 2) ** 0.5
+
+            if distance > 150:
+                if abs(different_x) > abs(different_y):
+                    if different_x > 0:
+                        if not self.check_collision(-self.speed, 0):
+                            self.local_x += self.speed
+                            self.animation(kind="right")
+                        if self.check_collision(-self.speed, 0):
+                            if different_y > 0:
+                                self.local_y += self.speed
+                                self.animation(kind="right")
+                            else:
+                                self.local_y -= self.speed
+                                self.animation(kind="left")
+                    else:
+                        if not self.check_collision(self.speed, 0):
+                            self.local_x -= self.speed
+                            self.animation(kind="left")
+                        if self.check_collision(self.speed, 0):
+                            if different_y > 0:
+                                self.local_y += self.speed
+                            else:
+                                self.local_y -= self.speed
                 else:
-                    self.direction = random.choice(['down', 'left', 'right'])
-            elif self.direction == 'down':
-                if not self.check_collision(0, self.speed):
-                    self.local_y += self.speed
-                    self.animation(kind="down")
-                else:
-                    self.direction = random.choice(['up', 'left', 'right'])
-            elif self.direction == 'left':
-                if not self.check_collision(-self.speed, 0):
-                    self.local_x -= self.speed
-                    self.animation(kind="left")
-                else:
-                    self.direction = random.choice(['up', 'down', 'right'])
-            elif self.direction == 'right':
-                if not self.check_collision(self.speed, 0):
-                    self.local_x += self.speed
-                    self.animation(kind="right")
-                else:
-                    self.direction = random.choice(['up', 'down', 'left'])
+                    if different_y > 0:
+                        if not self.check_collision(0, -self.speed):
+                            self.local_y += self.speed
+                            self.animation(kind="right")
+                        if self.check_collision(0, -self.speed):
+                            if different_x > 0:
+                                self.local_x += self.speed
+                                self.animation(kind="right")
+                            else:
+                                self.local_x -= self.speed
+                                self.animation(kind="left")
+                    else:
+                        if not self.check_collision(0, self.speed):
+                            self.local_y -= self.speed
+                            self.animation(kind="left")
+                        if self.check_collision(0, self.speed):
+                            if different_x > 0:
+                                self.local_x += self.speed
+                                self.animation(kind="right")
+                            else:
+                                self.local_x -= self.speed
+                                self.animation(kind="left")
 
     def animation(self, kind):
         if kind == 'dead':
@@ -783,7 +795,7 @@ GroupWall.add(wall1, wall2, wall3, wall4, wall5, wall6, wall7, wall8, wall9, wal
 
 
 crewmate1 = Crewmate("images/blue/stay.png", 2530, 600, width_sprite, height_sprite, 'blue', 3)
-crewmate2 = Crewmate("images/green/stay.png", 2400, 650, width_sprite, height_sprite, 'green', 3)
+crewmate2 = Crewmate("images/green/stay.png", 2400, 660, width_sprite, height_sprite, 'green', 3)
 crewmate3 = Crewmate("images/blue/stay.png", 2400, 400, width_sprite, height_sprite, 'blue', 3)
 
 impostor = Impostor("images/red/stay.png", 2550, 500, width_sprite, height_sprite, 0)
@@ -838,13 +850,11 @@ def game_run():
             player.update()
 
             crewmate1.reset()
-            crewmate1.update()
+            crewmate1.update(player.rect)
             crewmate2.reset()
-            crewmate2.update()
+            crewmate2.update(player.rect)
             crewmate3.reset()
-            crewmate3.update()
-
-            all_crewmates = [crewmate1, crewmate2, crewmate3, player]
+            crewmate3.update(player.rect)
 
             if elapsed_seconds <= 10:
                 timer_text = font_.render(str(int(10 - elapsed_seconds)), True, (0, 0, 0))
@@ -875,7 +885,6 @@ def game_run():
                     player.animation(kind='dead')
                     impostor.speed = 0
                     impostor.animation(kind='stay_right')
-                    all_crewmates.remove(player)
 
                     if running_sound.get_num_channels() == 0:
                         lose_sound.set_volume(0.1)
@@ -897,25 +906,28 @@ def game_run():
                         impostor_kill_2.set_volume(0.05)
                         impostor_kill_2.play()
                     crewmate1.animation(kind='dead')
-                    all_crewmates.remove(crewmate1)
                 elif collide_crewmate_2:
                     if impostor_kill_2.get_num_channels() == 0:
                         impostor_kill_2.set_volume(0.05)
                         impostor_kill_2.play()
                     crewmate2.animation(kind='dead')
-                    all_crewmates.remove(crewmate2)
                 elif collide_crewmate_3:
                     if impostor_kill_2.get_num_channels() == 0:
                         impostor_kill_2.set_volume(0.05)
                         impostor_kill_2.play()
                     crewmate3.animation(kind='dead')
-                    all_crewmates.remove(crewmate3)
                 else:
                     if elapsed_seconds >= game_duration:
                         player.speed = 0
                         impostor.speed = 0
+                        crewmate1.speed = 0
+                        crewmate2.speed = 0
+                        crewmate3.speed = 0
                         player.animation(kind='stay_right')
                         impostor.animation(kind='stay_right')
+                        crewmate1.animation(kind='stay_right')
+                        crewmate2.animation(kind='stay_right')
+                        crewmate3.animation(kind='stay_right')
                         if running_sound.get_num_channels() == 0:
                             win_sound.set_volume(0.05)
                             win_sound.play()
