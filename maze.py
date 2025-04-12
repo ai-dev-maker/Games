@@ -1,7 +1,6 @@
 from pygame import *
 from random import *
 
-# ---------------- Class ---------------- #
 
 
 class GameSprite(sprite.Sprite):
