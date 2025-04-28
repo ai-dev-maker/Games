@@ -1,8 +1,6 @@
 from pygame import *
 from random import *
 
-
-
 class GameSprite(sprite.Sprite):
     def __init__(self, player_image, player_x, player_y, player_width, player_height, speed=0):
         super().__init__()
